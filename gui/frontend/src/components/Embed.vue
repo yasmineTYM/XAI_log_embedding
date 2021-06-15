@@ -1,6 +1,50 @@
 <template>
     <div>
-        <div id="div_scatter"></div>
+        <el-row style="background-color:#303133; height:34px" id="scatter_row">
+            <el-col :span="6">
+                <el-select v-model="selected_app" placeholder="application">
+                    <el-option
+                    v-for="item in applications"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+            <el-col :span="6">
+                <el-select v-model="selected_project" placeholder="projections">
+                    <el-option
+                    v-for="item in projections"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+            <el-col :span="6">
+                <el-select v-model="selected_attribute" placeholder="log Info">
+                    <el-option
+                    v-for="item in attributes"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+            <el-col :span="6">
+                <el-select v-model="selected_event" placeholder="event/not">
+                    <el-option
+                    v-for="item in events"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+        </el-row>
+        <el-row>
+            <div id="div_scatter"></div>
+        </el-row>
         <div id="div_heatmap"></div>
     </div>
 </template>
@@ -13,26 +57,77 @@ import * as d3Lasso from "d3-lasso"
 export default{
     data(){
         return{
-            lasso_selected: []
+            lasso_selected: [],
+            applications: [
+            {
+                value:'all',
+                label:'all'
+            },
+            {
+                value: 'carts',
+                label: 'carts'
+            }, {
+                value: 'carts-db',
+                label: 'carts-db'
+            }, {
+                value: 'catalogue',
+                label: 'catalogue'
+            }, {
+                value: 'orders',
+                label: 'orders'
+            }],
+            projections:[{
+                'value': 'tsne',
+                'label': 't-SNE'
+            },{
+                'value':'umap',
+                'label':'UMAP'
+            }],
+            attributes:[{
+                'value': 'error_flag',
+                'label': 'error/not'
+            },{
+                'value':'linkage',
+                'label':'log pattern'
+            }],
+            events: [{
+                'value': 'count',
+                'label': 'count'
+            },{
+                'value': 'sequence',
+                'label': 'sequence'
+            }],
+            selected_event: 'count',
+            selected_app: 'all',
+            selected_project:'umap',
+            selected_attribute: 'error_flag'
         }
     },
+    
     created(){
-        const path = 'http://localhost:5000/getNode'
-        axios.get(path)
-        .then((res)=>{
-            // this.matrix_data = res.data
-            // this.drawCorrelation_casestudy(res.data)
-            this.draw(res.data)
-        })
-        .catch((error)=>{
-            console.log(error)
-        })
+        this.request_postScatter()
     },
     methods: {
+        request_postScatter(){
+            const path = 'http://localhost:5000/postScatter'
+            const payload = {
+                'application': this.selected_app,
+                'projection': this.selected_project
+            }
+            axios.post(path, payload)
+            .then((res)=>{
+                this.draw(res.data)
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
+        },
         draw(data){
+            console.log(data)
+            d3.select('#div_scatter').html('')
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
-            var w = 850, margin=5;
-            var h = 495;
+            var w = 730, margin=5;
+            var h = 490;
             var r = 3.5;
             var that = this;
 
@@ -42,20 +137,25 @@ export default{
             
             var scale_x = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.x))
-                .range([ 0, w ]);
+                .range([ r, w ]);
             var scale_y = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.y))
-                .range([ 0, h ]);
+                .range([ r, h ]);
             var circles = svg.selectAll("circle")
                 .data(data)
                 .enter()
                 .append("circle")
-                .attr('class','original')
+                .attr('class',function(d){
+                    if(d['label']==0){
+                        return 'normal';
+                    }else{
+                        return 'abnormal'
+                    }
+                })
                 .attr("cx",d=>scale_x(d['x']))
                 .attr("cy",d=>scale_y(d['y']))
-                .attr("r",r);
-            
-           
+                .attr("r",r)
+                
             // Lasso functions
             var lasso_start = function() {
                 that.lasso_selected = []
@@ -95,7 +195,7 @@ export default{
                 // Reset the style of the not selected dots
                 lasso.notSelectedItems()
                     .attr("r",3.5);
-                that.heatmap()
+                that.request_postLog()
             };
             //  var lasso = .lasso();
             var lasso = d3Lasso.lasso()
@@ -109,12 +209,13 @@ export default{
             
             svg.call(lasso);
         },
-        heatmap(){
-            // console.log(this.lasso_selected)
-            // console.log('tuyamei')
-            const path = 'http://localhost:5000/postEmbedding'
+        request_postLog(){
+         
+            const path = 'http://localhost:5000/postLog'
             var payload={
-                'selected': this.lasso_selected
+                'selected': this.lasso_selected,
+                'type':this.selected_attribute,
+                'event_type':this.selected_event
             }
             axios.post(path, payload)
             .then((res)=>{
@@ -181,7 +282,12 @@ export default{
         }
     },
     watch:{
-
+        selected_project(){
+            this.request_postScatter()
+        },
+        selected_app(){
+            this.request_postScatter()
+        }
     },
     mounted(){
 
@@ -196,9 +302,17 @@ export default{
 circle {
     fill-opacity: 0.5;
 }
-.original {
-    fill:#fec44f;
-    stroke:gray
+.normal {
+    fill: #346751;
+    /* stroke:hsl(0, 3%, 73%);
+    stroke-width:1; */
+    fill-opacity: 0.5;
+}
+.abnormal {
+    fill: #c84b31;
+    stroke:hsl(0, 3%, 73%);
+    stroke-width:1;
+    fill-opacity: 0.5;
 }
 .lasso path {
     stroke: rgb(80,80,80);
@@ -229,5 +343,13 @@ circle {
 
 .selected {
     fill: steelblue;
+}
+
+#scatter_row .el-input__inner {
+    padding-right: 20px;
+    height: 28px;
+    width:120px;
+    background-color:#606266;
+    color: white;
 }
 </style>

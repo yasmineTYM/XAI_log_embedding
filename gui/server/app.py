@@ -2,6 +2,8 @@ from flask import Flask, jsonify,request
 from flask_cors import CORS
 import pandas as pd 
 import numpy as np
+import ast 
+import collections
 # configuration
 DEBUG = True
 
@@ -19,11 +21,85 @@ def ping_pong():
     return jsonify('pong!')
 
 
-@app.route('/getNode', methods=['GET'])
-def getNode():
-    data = pd.read_csv('../../pre_analysis/760_large_v_removed.csv')
-    output = data.to_dict('records')
-    return jsonify(output)
+@app.route('/postScatter', methods=['POST'])
+def postScatter():
+    params = request.get_json()
+    application = params['application']
+    project = params['projection']
+    
+    data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
+
+    print(data.columns)
+    if application =='all':
+        return jsonify(data.to_dict('records'))
+    else:
+        subdata = data[data['instance_id']==application]
+        output = subdata.to_dict('records')
+        return jsonify(output)
+
+@app.route('/postLog',methods =['POST'])
+def postLog():
+    params = request.get_json()
+    selected = params['selected']
+    attribute = params['type']
+    event_type = params['event_type']
+    selected_pd = pd.DataFrame(selected)
+    
+    # get unique apps
+    instance_ids = selected_pd.instance_id.unique()
+    print(instance_ids)
+
+    # get unique patterns number 
+    labels = []
+    for ele in selected:
+        labels+= ast.literal_eval(ele[attribute])
+    counter = collections.Counter(labels)
+    unique_label_list = counter.keys()
+
+    print(unique_label_list)
+    
+
+    
+    if event_type == 'count':
+        output = []
+        y_values = []
+        x_values = []
+        for i in instance_ids:
+            for j in unique_label_list:
+                x_values.append(str(i)+'_'+str(j))
+        for index, row in selected_pd.iterrows():
+            y_values.append(index)
+            log_count = ast.literal_eval(row[attribute])
+            counter=collections.Counter(log_count)
+            for label in unique_label_list:
+                if label in counter.keys():
+                    output.append({
+                        'group': row['instance_id']+'_'+str(label),
+                        'variable': index,
+                        'value': counter[label]
+                    })
+    else:
+        output = []
+        x_values = []
+        y_values = []
+        for index, row in selected_pd.iterrows():
+            y_values.append(index)
+            log_list = ast.literal_eval(row[attribute])
+            for i in range(len(log_list)):
+                if i not in x_values:
+                    x_values.append(i)
+                output.append({
+                    'variable':index,
+                    'group': i,
+                    'value': log_list[i]
+                })
+            
+
+    return jsonify({
+        'heatmapdata': output,
+        'x_values':x_values,
+        'y_values':y_values
+    })
 
 @app.route('/postEmbedding', methods=['POST'])
 def postEmbedding():

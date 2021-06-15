@@ -2,14 +2,12 @@
   <div id="app">
       <el-row>
         <el-col :span="10">
-          <div style="height:500px; border:1px solid black">
+          <div style="height:550px; border:1px solid black">
              <Embed/>
           </div>
         </el-col>
          <el-col :span="14">
-          <!-- <div style="height:170px; border:1px solid black">
-           
-          </div> -->
+            <Tree/>
          </el-col>
       </el-row>
        
@@ -19,10 +17,12 @@
 
 <script>
 import Embed from './components/Embed.vue'
+import Tree from './components/Tree.vue'
 export default {
   name: 'App',
   components:{
     Embed,
+    Tree
   }
 }
 </script>
