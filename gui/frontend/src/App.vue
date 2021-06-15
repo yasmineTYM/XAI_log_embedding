@@ -2,7 +2,7 @@
   <div id="app">
       <el-row>
         <el-col :span="10">
-          <div style="height:550px; border:1px solid black">
+          <div>
              <Embed/>
           </div>
         </el-col>

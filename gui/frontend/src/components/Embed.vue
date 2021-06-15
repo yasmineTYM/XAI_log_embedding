@@ -1,6 +1,7 @@
 <template>
     <div>
-        <el-row style="background-color:#303133; height:34px" id="scatter_row">
+        <div style="height:540px; border: 1px solid black">
+            <el-row style="background-color:#303133; height:34px" id="scatter_row">
             <el-col :span="6">
                 <el-select v-model="selected_app" placeholder="application">
                     <el-option
@@ -45,7 +46,9 @@
         <el-row>
             <div id="div_scatter"></div>
         </el-row>
-        <div id="div_heatmap"></div>
+        </div>
+        
+        <div id="div_heatmap" style="height:450px; border: 1px solid black"></div>
     </div>
 </template>
 
@@ -127,7 +130,7 @@ export default{
             d3.select('#div_scatter').html('')
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
             var w = 730, margin=5;
-            var h = 490;
+            var h = 480;
             var r = 3.5;
             var that = this;
 
