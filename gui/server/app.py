@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import ast 
 import collections
+import json
 # configuration
 DEBUG = True
 
@@ -29,13 +30,19 @@ def postScatter():
     
     data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
 
-    print(data.columns)
+    print(type(data))
     if application =='all':
-        return jsonify(data.to_dict('records'))
+        # data = data.to_dict(orient="records")
+        # print(type(data))
+        return jsonify({
+            'test': data.to_dict('records')
+        })
     else:
         subdata = data[data['instance_id']==application]
         output = subdata.to_dict('records')
-        return jsonify(output)
+        return jsonify({
+            'test': output
+        })
 
 @app.route('/postLog',methods =['POST'])
 def postLog():
@@ -144,19 +151,22 @@ def postEmbedding():
 
 @app.route('/getTree', methods=['GET'])
 def getTree():
-    treeData = {
-        "name": "Top Level",
-        "children": [
-        { 
-            "name": "Level 2: A",
-            "children": [
-            { "name": "Son of A" },
-            { "name": "Daughter of A" }
-            ]
-        },
-        { "name": "Level 2: B" }
-        ]
-    }
+
+    # treeData = {
+    #     "name": "Top Level",
+    #     "children": [
+    #     { 
+    #         "name": "Level 2: A",
+    #         "children": [
+    #         { "name": "Son of A" },
+    #         { "name": "Daughter of A" }
+    #         ]
+    #     },
+    #     { "name": "Level 2: B" }
+    #     ]
+    # }
+    with open('../../../../Data/XAI/carts/embeddings/log_level/log_by_app/with_label/keywords/tree_data.txt') as json_file:
+        treeData = json.load(json_file)
     # treeData = [
     #     {
     #     "name": "Top Level",

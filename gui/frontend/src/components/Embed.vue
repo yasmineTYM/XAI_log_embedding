@@ -78,6 +78,15 @@ export default{
             }, {
                 value: 'orders',
                 label: 'orders'
+            },{
+                value:'shipping',
+                label:'shipping'
+            },{
+                value:'queue-master',
+                label:'queue-master'
+            },{
+                value:'user-db',
+                label:'user-db'
             }],
             projections:[{
                 'value': 'tsne',
@@ -119,7 +128,9 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                this.draw(res.data)
+                console.log(res.data['test'])
+                // console.log(res.data)
+                this.draw(res.data['test'])
             })
             .catch((error)=>{
                 console.log(error)

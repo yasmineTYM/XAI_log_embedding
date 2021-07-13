@@ -7,6 +7,9 @@
             <el-row>
                 <div id="div_tree"></div>
             </el-row>
+            <el-row>
+                <div id="div_detail"></div>
+            </el-row>
         </div>
     </div>
 </template>
@@ -14,11 +17,11 @@
 <script>
 import * as d3 from 'd3'
 import axios from 'axios'
-import * as d3Lasso from "d3-lasso"
+import cloud from "d3-cloud"
 export default{
     data(){
         return{
-           
+           text_detail:'ttt'
         }
     },
     
@@ -39,6 +42,7 @@ export default{
 
         },
         drawTree(treeData){
+            var that = this
         // ************** Generate the tree diagram	 *****************
             var margin = {top: 40, right: 120, bottom: 20, left: 120},
                 width = 960 - margin.right - margin.left,
@@ -88,6 +92,9 @@ export default{
             nodes.forEach(function(d){ d.y = d.depth * 180});
 
             // ****************** Nodes section ***************************
+            var num2radius = d3.scaleLinear()
+            .domain([1000, 127264]) // unit: km
+            .range([6,10]) // unit: pixels
 
             // Update the nodes...
             var node = svg.selectAll('g.node')
@@ -105,20 +112,35 @@ export default{
             // Add Circle for the nodes
             nodeEnter.append('circle')
                 .attr('class', 'node')
-                .attr('r', 1e-6)
+                .attr('r', function(d){
+                    // console.log(d)
+                    let data = d3.select(this).data()[0]['data']
+                    return num2radius(data['num'])
+                    // console.log(data)
+                    // return 1e-6
+                })
                 .style("fill", function(d) {
                     return d._children ? "lightsteelblue" : "#fff";
                 });
 
             // Add labels for the nodes
             nodeEnter.append('text')
-                .attr("dy", ".35em")
+                .attr("dy", function(d,i){
+                    if(i%2==0){
+                        return 20
+                    }else{
+                        return -20
+                    }
+                })
                 .attr("x", function(d) {
-                    return d.children || d._children ? -13 : 13;
+                    return 13
+                    // return d.children || d._children ? -13 : 13;
                 })
                 .attr("text-anchor", function(d) {
-                    return d.children || d._children ? "end" : "start";
+                    return "middle"
+                    // return d.children || d._children ? "end" : "start";
                 })
+                .style('pointer-events','none')
                 .text(function(d) { return d.data.name; });
 
             // UPDATE
@@ -134,11 +156,19 @@ export default{
 
             // Update the node attributes and style
             nodeUpdate.select('circle.node')
-                .attr('r', 10)
+                .attr('r', function(d){
+                    let data = d3.select(this).data()[0]['data']
+                    return num2radius(data['num'])
+                })
                 .style("fill", function(d) {
                     return d._children ? "lightsteelblue" : "#fff";
                 })
-                .attr('cursor', 'pointer');
+                .attr('cursor', 'pointer')
+                .on('dblclick',function(d){
+                    // console.log(d)
+                    let data = d3.select(this).data()[0]['data']
+                    that.drawWordCloud(data)
+                });
 
 
             // Remove any exiting nodes
@@ -198,14 +228,24 @@ export default{
 
             // Creates a curved (diagonal) path from parent to the child nodes
             function diagonal(s, d) {
+                //horizontal 
                 // var path = `M ${s.y} ${s.x}
                 //         C ${(s.y + d.y) / 2} ${s.x},
                 //         ${(s.y + d.y) / 2} ${d.x},
                 //         ${d.y} ${d.x}`
-                var path = `M ${s.x} ${s.y}
-                        C ${(s.x + d.x) / 2} ${s.y},
-                        ${(s.x + d.x) / 2} ${d.y},
+
+                //vertical1
+                 var path = `M ${s.x} ${s.y}
+                        C ${s.x} ${(s.y+d.y)/2},
+                        ${d.x} ${(s.y+d.y)/2},
                         ${d.x} ${d.y}`
+
+                // vertical2 
+
+                // var path = `M ${s.x} ${s.y}
+                //         C ${(s.x + d.x) / 2} ${s.y},
+                //         ${(s.x + d.x) / 2} ${d.y},
+                //         ${d.x} ${d.y}`
 
                 return path
             }
@@ -223,7 +263,55 @@ export default{
             }
             
             } 
+        },
+        drawWordCloud(data){
+            d3.select('#div_detail').html('')
+            var myWords = data['keywords']
+            // set the dimensions and margins of the graph
+            var margin = {top: 10, right: 10, bottom: 10, left: 10},
+                width = 450 - margin.left - margin.right,
+                height = 450 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#div_detail").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+            // Constructs a new cloud layout instance. It run an algorithm to find the position of words that suits your requirements
+            // Wordcloud features that are different from one word to the other must be here
+            var layout = cloud()
+            .size([width, height])
+            .words(myWords.map(function(d) { return {text: d.word, size:d.size}; }))
+            .padding(5)        //space between words
+            .rotate(function() { return ~~(Math.random() * 2) * 90; })
+            .fontSize(function(d) { return 20; })      // font size of words
+            .on("end", draw);
+            layout.start();
+
+            // This function takes the output of 'layout' above and draw the words
+            // Wordcloud features that are THE SAME from one word to the other can be here
+            var fill = d3.scale.category20();
+            function draw(words) {
+            svg
+                .append("g")
+                .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                .selectAll("text")
+                    .data(words)
+                .enter().append("text")
+                    .style("font-size", '20px')
+                    .style("fill", "steerblue")
+                    .attr("text-anchor", "middle")
+                    .style("font-family", "Impact")
+                    .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                    })
+                    .text(function(d) { return d.text; });
+            }
         }
+
     },
     watch:{
         
