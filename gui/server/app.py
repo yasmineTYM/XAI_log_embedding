@@ -28,8 +28,8 @@ def postScatter():
     application = params['application']
     project = params['projection']
     
-    data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
-
+    # data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
+    data = pd.read_csv('../../../../Data/gui/scatterplot/'+project+'.csv')
     print(type(data))
     if application =='all':
         # data = data.to_dict(orient="records")
@@ -38,7 +38,7 @@ def postScatter():
             'test': data.to_dict('records')
         })
     else:
-        subdata = data[data['instance_id']==application]
+        subdata = data[data['app']==application]
         output = subdata.to_dict('records')
         return jsonify({
             'test': output

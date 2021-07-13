@@ -1,16 +1,11 @@
 <template>
   <div id="app">
-      <el-row>
-        <el-col :span="10">
-          <div>
-             <Embed/>
-          </div>
-        </el-col>
-         <el-col :span="14">
-            <Tree/>
-         </el-col>
+      <el-row style="height:325px">
+        <Embed/>
       </el-row>
-       
+      <el-row style="height:580px">
+         <Tree/>
+      </el-row>
 
   </div>
 </template>

@@ -1,54 +1,69 @@
 <template>
     <div>
-        <div style="height:540px; border: 1px solid black">
-            <el-row style="background-color:#303133; height:34px" id="scatter_row">
-            <el-col :span="6">
-                <el-select v-model="selected_app" placeholder="application">
-                    <el-option
-                    v-for="item in applications"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-col>
-            <el-col :span="6">
-                <el-select v-model="selected_project" placeholder="projections">
-                    <el-option
-                    v-for="item in projections"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-col>
-            <el-col :span="6">
-                <el-select v-model="selected_attribute" placeholder="log Info">
-                    <el-option
-                    v-for="item in attributes"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-col>
-            <el-col :span="6">
-                <el-select v-model="selected_event" placeholder="event/not">
-                    <el-option
-                    v-for="item in events"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value">
-                    </el-option>
-                </el-select>
-            </el-col>
-        </el-row>
         <el-row>
-            <div id="div_scatter"></div>
+            <el-col :span="5">
+                <div style="height:340px; border: 1px solid black; margin-right:3px">
+                    <el-row style="background-color:#002d9c; height:34px" class="scatter_row">
+                        <el-col :span="12">
+                            <el-select v-model="selected_app" placeholder="application">
+                                <el-option
+                                v-for="item in applications"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-select v-model="selected_project" placeholder="projections">
+                                <el-option
+                                v-for="item in projections"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-col>
+                        <!-- <el-col :span="6">
+                            <el-select v-model="selected_attribute" placeholder="log Info">
+                                <el-option
+                                v-for="item in attributes"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-select v-model="selected_event" placeholder="event/not">
+                                <el-option
+                                v-for="item in events"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </el-col> -->
+                    </el-row>
+                    <el-row>
+                        <div id="div_scatter"></div>
+                    </el-row>
+                </div>
+            </el-col>
+            <el-col :span="19">
+                <div style="height:340px; border: 1px solid black;">
+                    <el-row style="background-color:#002d9c; height:34px" class="scatter_row">
+                        
+                    </el-row>
+                    <el-row>
+                        <div id="div_heatmap"></div>
+                    </el-row>
+                </div>
+            </el-col>
         </el-row>
-        </div>
         
-        <div id="div_heatmap" style="height:450px; border: 1px solid black"></div>
+        
+        
     </div>
 </template>
 
@@ -57,6 +72,7 @@
 import * as d3 from 'd3'
 import axios from 'axios'
 import * as d3Lasso from "d3-lasso"
+import * as d3Hexbin from 'd3-hexbin'
 export default{
     data(){
         return{
@@ -140,8 +156,8 @@ export default{
             console.log(data)
             d3.select('#div_scatter').html('')
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
-            var w = 730, margin=5;
-            var h = 480;
+            var w = 380, margin=5;
+            var h = 280;
             var r = 3.5;
             var that = this;
 
@@ -160,7 +176,7 @@ export default{
                 .enter()
                 .append("circle")
                 .attr('class',function(d){
-                    if(d['label']==0){
+                    if(d['anomaly_label']==0){
                         return 'normal';
                     }else{
                         return 'abnormal'
@@ -223,6 +239,82 @@ export default{
             
             svg.call(lasso);
         },
+        // draw_hexbin(data){
+        //     console.log(data)
+        //     d3.select('#div_scatter').html('')
+        //     // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
+        //     var w = 380, margin=5;
+        //     var h = 280;
+        //     var r = 3.5;
+        //     var that = this;
+                
+
+        //     var svg = d3.select("#div_scatter").append("svg")
+        //         .attr("width",w+margin)
+        //         .attr("height",h+margin);
+            
+
+        //     var scale_x = d3.scaleLinear()
+        //         .domain(d3.extent(data, d => d.x))
+        //         .range([ r, w ]);
+        //     var scale_y = d3.scaleLinear()
+        //         .domain(d3.extent(data, d => d.y))
+        //         .range([ r, h ]);
+        //      // Reformat the data: d3.hexbin() needs a specific format
+        //     var inputForHexbinFun = []
+        //     data.forEach(function(d) {
+        //         inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label']] )  // Note that we had the transform value of X and Y !
+        //     })
+        //      // Prepare a color palette
+        //     var color = d3.scaleLinear()
+        //         .domain([0, 289]) // Number of points in the bin?
+        //         .range(["transparent",  "#69b3a2"])
+
+        //     // Compute the hexbin data
+        //     var hexbin = d3Hexbin.hexbin()
+        //         .radius(9) // size of the bin in px
+        //         .extent([ [0, 0], [w, h] ])
+        //     var colors = d3.scaleOrdinal(d3.schemeCategory10).range().slice(0, 4);
+        //     var attenuation = d3.scaleLog().range([0,1]);
+
+        //     // Plot the hexbins
+        //     svg.append("clipPath")
+        //         .attr("id", "clip")
+        //         .append("rect")
+        //         .attr("width", w)
+        //         .attr("height", h)
+        //      svg.append("g")
+        //         .attr("clip-path", "url(#clip)")
+        //         .selectAll("path")
+        //         .data( hexbin(inputForHexbinFun) )
+        //         .enter().append("path")
+        //         .attr("d", hexbin.hexagon())
+        //         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+        //         .attr("fill", function(d, i) { 
+        //             var counts = [0,0];
+        //             d.forEach(function(p) {
+        //                 let index = parseInt(p[2])
+        //                 counts[index]++;
+        //             });
+        //             // // console.log(counts)
+        //             let output = counts.reduce(function(p, c, i) { 
+        //                 let temp = d3.interpolateLab(p, colors[i])(c / d.length);
+        //                 // console.log(temp)
+        //                 return temp
+        //             }, "white")
+        //             // // console.log(output)
+        //             return output;
+        //             // console.log(d.length)
+        //             // return color(d.length);
+        //          })
+        //         .style('fill-opacity', function(d) { return attenuation(d.length); })
+        //         .attr("stroke", "black")
+        //         .attr("stroke-width", "0.1")
+
+            
+
+                
+        // },
         request_postLog(){
          
             const path = 'http://localhost:5000/postLog'
@@ -359,11 +451,11 @@ circle {
     fill: steelblue;
 }
 
-#scatter_row .el-input__inner {
+.scatter_row .el-input__inner {
     padding-right: 20px;
     height: 28px;
     width:120px;
-    background-color:#606266;
+    background-color:#002d9c;
     color: white;
 }
 </style>
