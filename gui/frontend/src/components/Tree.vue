@@ -1,7 +1,7 @@
 <template>
     <div>
-        <div style="height:540px; border: 1px solid black;">
-            <el-row style="background-color:#002d9c; height:34px" id="scatter_row">
+        <div style="height:540px; border: 1px solid black;border-radius: 10px;">
+            <el-row  class="scatter_row">
 
             </el-row>
             <el-row>

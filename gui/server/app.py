@@ -48,64 +48,109 @@ def postScatter():
 def postLog():
     params = request.get_json()
     selected = params['selected']
-    attribute = params['type']
-    event_type = params['event_type']
+    # attribute = params['type']
+    # event_type = params['event_type']
+    
     selected_pd = pd.DataFrame(selected)
     
     # get unique apps
-    instance_ids = selected_pd.instance_id.unique()
-    print(instance_ids)
+    instance_ids = selected_pd.app.unique()
 
-    # get unique patterns number 
-    labels = []
+    # get unique labels, 
+    label_error_flag = []
+    label_template_ids = []
+    label_embedding_ids = []
     for ele in selected:
-        labels+= ast.literal_eval(ele[attribute])
-    counter = collections.Counter(labels)
-    unique_label_list = counter.keys()
-
-    print(unique_label_list)
+        label_error_flag+= ast.literal_eval(ele['error_flag'])
+        label_template_ids+= ast.literal_eval(ele['template_ids'])
+        label_embedding_ids+= ast.literal_eval(ele['embedding_ids'])
+        
+    unique_error_flag = collections.Counter(label_error_flag).keys()
+    unique_template_ids = collections.Counter(label_template_ids).keys()
+    unique_embedding_ids = collections.Counter(label_embedding_ids).keys()
+    print(unique_error_flag, unique_template_ids, unique_embedding_ids)
     
-
+    ## generate the data for COUNT heatmap 
+    output_error = []
+    output_template = []
+    output_embed = []
+    y_values = []
     
-    if event_type == 'count':
-        output = []
-        y_values = []
-        x_values = []
-        for i in instance_ids:
-            for j in unique_label_list:
-                x_values.append(str(i)+'_'+str(j))
-        for index, row in selected_pd.iterrows():
-            y_values.append(index)
-            log_count = ast.literal_eval(row[attribute])
-            counter=collections.Counter(log_count)
-            for label in unique_label_list:
-                if label in counter.keys():
-                    output.append({
-                        'group': row['instance_id']+'_'+str(label),
-                        'variable': index,
-                        'value': counter[label]
-                    })
-    else:
-        output = []
-        x_values = []
-        y_values = []
-        for index, row in selected_pd.iterrows():
-            y_values.append(index)
-            log_list = ast.literal_eval(row[attribute])
-            for i in range(len(log_list)):
-                if i not in x_values:
-                    x_values.append(i)
-                output.append({
-                    'variable':index,
-                    'group': i,
-                    'value': log_list[i]
+    
+    for index, row in selected_pd.iterrows():
+        y_values.append(index)
+        error_flag = ast.literal_eval(row['error_flag'])
+        template_ids = ast.literal_eval(row['template_ids'])
+        embed_ids = ast.literal_eval(row['embedding_ids'])
+        
+        counter_error =collections.Counter(error_flag)
+        counter_template = collections.Counter(template_ids)
+        counter_embed = collections.Counter(embed_ids)
+
+        for label in unique_error_flag:
+            if label in counter_error.keys():
+                output_error.append({
+                    'group': str(label),
+                    'variable': index,
+                    'value': counter_error[label]
                 })
+        for label in unique_template_ids:
+            if label in counter_template.keys():
+                output_template.append({
+                    'group': str(label),
+                    'variable': index,
+                    'value': counter_template[label]
+                })
+        for label in unique_embedding_ids:
+            if label in counter_embed.keys():
+                output_embed.append({
+                    'group': str(label),
+                    'variable': index,
+                    'value': counter_embed[label]
+                })
+    # if event_type == 'count':
+    #     output = []
+    #     y_values = []
+    #     x_values = []
+    #     for i in instance_ids:
+    #         for j in unique_label_list:
+    #             x_values.append(str(i)+'_'+str(j))
+    #     for index, row in selected_pd.iterrows():
+    #         y_values.append(index)
+    #         log_count = ast.literal_eval(row[attribute])
+    #         counter=collections.Counter(log_count)
+    #         for label in unique_label_list:
+    #             if label in counter.keys():
+    #                 output.append({
+    #                     'group': row['app']+'_'+str(label),
+    #                     'variable': index,
+    #                     'value': counter[label]
+    #                 })
+    # else:
+    #     output = []
+        # x_values = []
+        # y_values = []
+        # for index, row in selected_pd.iterrows():
+        #     y_values.append(index)
+        #     log_list = ast.literal_eval(row[attribute])
+        #     for i in range(len(log_list)):
+        #         if i not in x_values:
+        #             x_values.append(i)
+        #         output.append({
+        #             'variable':index,
+        #             'group': i,
+        #             'value': log_list[i]
+        #         })
             
 
     return jsonify({
-        'heatmapdata': output,
-        'x_values':x_values,
-        'y_values':y_values
+        'data_error': output_error,
+        'data_template':output_template,
+        'data_embedding': output_embed,
+        'x_error':list(unique_error_flag),
+        'y_values':y_values,
+        'x_template': list(unique_template_ids),
+        'x_embedding': list(unique_embedding_ids)
     })
 
 @app.route('/postEmbedding', methods=['POST'])

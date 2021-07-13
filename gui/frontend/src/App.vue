@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-      <el-row style="height:325px">
+      <el-row style="height:355px">
         <Embed/>
       </el-row>
       <el-row style="height:580px">
