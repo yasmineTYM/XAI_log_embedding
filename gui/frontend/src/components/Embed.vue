@@ -2,7 +2,7 @@
     <div>
         <el-row>
             <el-col :span="5">
-                <div style="height:350px; border: 1px solid black; margin-right:3px;border-radius: 10px;">
+                <div style="height:350px; border: 1px solid black; margin-right:3px;border-radius: 5px;">
                     <el-row class="scatter_row">
                         <el-col :span="12">
                             <el-select v-model="selected_app" placeholder="application">
@@ -51,9 +51,8 @@
                 </div>
             </el-col>
             <el-col :span="19">
-                <div style="height:350px; border: 1px solid black;border-radius: 10px;">
+                <div style="height:350px; border: 1px solid black;border-radius: 5px;">
                     <el-row class="scatter_row">
-                        
                     </el-row>
                     <el-row>
                         <el-col :span="3">
@@ -64,6 +63,9 @@
                         </el-col>
                         <el-col :span="3">
                             <div id="div_heatmap_count_embedding"></div>
+                        </el-col>
+                        <el-col :span="10">
+                            <div id="div_heatmap_sequence_error"></div>
                         </el-col>
                     </el-row>
                 </div>
@@ -154,17 +156,18 @@ export default{
             axios.post(path, payload)
             .then((res)=>{
                 console.log(res.data)
-                this.draw_heatmap('Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
-                this.draw_heatmap('Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
-                this.draw_heatmap('Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], res.data['x_embedding'], res.data['y_values'])
+                this.draw_heatmap(180,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
+                this.draw_heatmap(180,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
+                this.draw_heatmap(180,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], res.data['x_embedding'], res.data['y_values'])
+                this.draw_heatmap(500,'Sequence of Error Flag','#div_heatmap_sequence_error', res.data['sequence_error'], res.data['sequence_x'], res.data['y_values'])
             })
         },
-        draw_heatmap(Title,div_id,DATA,myGroups,myVars){
+        draw_heatmap(size,Title,div_id,DATA,myGroups,myVars){
             // var DATA = RAW['heatmapdata']
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
             var margin = {top: 30, right: 10, bottom: 50, left: 50},
-            width = 180 - margin.left - margin.right,
+            width = size - margin.left - margin.right,
             height = 310 - margin.top - margin.bottom;
             // append the svg object to the body of the page
             var svg = d3.select(div_id)
@@ -435,7 +438,7 @@ circle {
 .scatter_row{
     background-color:#515E63; 
     height:34px;
-    border-radius: 10px;
+    border-radius: 5px;
     
 }
 .normal {

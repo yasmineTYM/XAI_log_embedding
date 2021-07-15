@@ -108,6 +108,43 @@ def postLog():
                     'variable': index,
                     'value': counter_embed[label]
                 })
+    
+    ## generate data for the sequence event pattern 
+    
+    sequence_error = []
+    x_sequence_error = []
+    
+    sequence_embedding = []
+    sequence_template = []
+    for index, row in selected_pd.iterrows():
+        flag_list = ast.literal_eval(row['error_flag'])
+        
+        template_list = ast.literal_eval(row['template_ids'])
+
+        embedding_list = ast.literal_eval(row['embedding_ids'])
+        
+        for i in range(len(flag_list)):
+            if i not in x_sequence_error:
+                x_sequence_error.append(i)
+            if flag_list[i]==False:
+                value = 0
+            else:
+                value = 1
+            sequence_error.append({
+                'variable':index,
+                'group': i,
+                'value': value
+            })
+            sequence_template.append({
+                'variable':index,
+                'group':i,
+                'value': template_list[i]
+            })
+            sequence_embedding.append({
+                'variable': index,
+                'group':i,
+                'value': embedding_list[i]
+            })
     # if event_type == 'count':
     #     output = []
     #     y_values = []
@@ -150,7 +187,11 @@ def postLog():
         'x_error':list(unique_error_flag),
         'y_values':y_values,
         'x_template': list(unique_template_ids),
-        'x_embedding': list(unique_embedding_ids)
+        'x_embedding': list(unique_embedding_ids),
+        'sequence_error': sequence_error,
+        'sequence_embedding': sequence_embedding,
+        'sequence_template': sequence_template,
+        'sequence_x': x_sequence_error
     })
 
 @app.route('/postEmbedding', methods=['POST'])
@@ -197,45 +238,10 @@ def postEmbedding():
 @app.route('/getTree', methods=['GET'])
 def getTree():
 
-    # treeData = {
-    #     "name": "Top Level",
-    #     "children": [
-    #     { 
-    #         "name": "Level 2: A",
-    #         "children": [
-    #         { "name": "Son of A" },
-    #         { "name": "Daughter of A" }
-    #         ]
-    #     },
-    #     { "name": "Level 2: B" }
-    #     ]
-    # }
-    with open('../../../../Data/XAI/carts/embeddings/log_level/log_by_app/with_label/keywords/tree_data.txt') as json_file:
+    # with open('../../../../Data/XAI/carts/embeddings/log_level/log_by_app/with_label/keywords/tree_data.txt') as json_file:
+    #     treeData = json.load(json_file)
+    with open('../../../../Data/gui/timeline/data.json') as json_file:
         treeData = json.load(json_file)
-    # treeData = [
-    #     {
-    #     "name": "Top Level",
-    #     "parent": "null",
-    #     "children": [
-    #         {
-    #         "name": "Level 2: A",
-    #         "parent": "Top Level",
-    #         "children": [
-    #         {
-    #             "name": "Son of A",
-    #             "parent": "Level 2: A"
-    #         },
-    #         {
-    #             "name": "Daughter of A",
-    #             "parent": "Level 2: A"
-    #         }
-    #         ]
-    #         },
-    #         {
-    #             "name": "Level 2: B",
-    #             "parent": "Top Level"
-    #         }
-    #         ]  
     return jsonify(treeData)
 if __name__ == '__main__':
     app.run()
