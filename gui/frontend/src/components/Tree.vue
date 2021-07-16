@@ -63,26 +63,7 @@ export default{
             .datum(testData).call(chart);
 
         },
-        drawEventDrops(){
-            const repositoriesData = [{
-                    name: 'admin-on-rest',
-                    data: [{ date: new Date('2014/09/13 14:21:31') } /* ... */],
-                },
-                {
-                    name: 'event-drops',
-                    data: [{ date: new Date('2014/09/15 13:24:57') } /* ... */],
-                },
-                {
-                    name: 'sedy',
-                    data: [{ date: new Date('2014/09/16 13:25:12') } /* ... */],
-                }];
-                
-            var chart = eventDrops({d3});
-            d3.select('#div_detail')
-            .data([repositoriesData])
-            .call(chart);
-
-        },
+       
         getTreeData(){
             const path = "http://localhost:5000/getTree"
             
@@ -100,7 +81,7 @@ export default{
                 //    d['data'] = d['fullData']
                 })
                 console.log(eventDropData)
-                this.drawEventDrops(eventDropData)
+                // this.drawEventDrops(eventDropData)
             })
             .catch((error)=>{
                 console.log(error)
