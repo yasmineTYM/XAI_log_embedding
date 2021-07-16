@@ -63,24 +63,13 @@ export default{
             .datum(testData).call(chart);
 
         },
-       
         getTreeData(){
             const path = "http://localhost:5000/getTree"
             
             axios.get(path)
             .then((res)=>{
-                // this.drawTimeline()
-                console.log(res.data)
-                const eventDropData = []
-                res.data.forEach(function(d,i){
-
-                   eventDropData.push({
-                       'name': d['name'],
-                       'data': d['data']
-                   })
-                //    d['data'] = d['fullData']
-                })
-                console.log(eventDropData)
+                this.drawTimeline()
+                
                 // this.drawEventDrops(eventDropData)
             })
             .catch((error)=>{
