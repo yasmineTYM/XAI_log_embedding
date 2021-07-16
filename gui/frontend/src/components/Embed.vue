@@ -46,7 +46,9 @@
                         </el-col> -->
                     </el-row>
                     <el-row>
-                        <div id="div_scatter"></div>
+                        <div id="div_scatter">
+                            <el-slider v-model="hexbin_radius_ratio" style="width:70px; margin-left:5px" @change="draw"></el-slider>
+                        </div>
                     </el-row>
                 </div>
             </el-col>
@@ -123,7 +125,9 @@ export default{
             }], 
             // selected_event: 'count',
             selected_app: 'all',
-            selected_project:'tsne'
+            selected_project:'tsne',
+            hexbin_radius_ratio:20,
+            scatterplotData: null 
         }
     },
     
@@ -141,13 +145,14 @@ export default{
             .then((res)=>{
                 console.log(res.data['test'])
                 // console.log(res.data)
-                this.draw(res.data['test'])
+                this.scatterplotData = res.data['test']
+                this.draw()
             })
             .catch((error)=>{
                 console.log(error)
             })
         },
-         request_postLog(){
+        request_postLog(){
          
             const path = 'http://localhost:5000/postLog'
             var payload={
@@ -249,94 +254,105 @@ export default{
             });
 
         },
-        draw(data){
-            console.log(data)
-            d3.select('#div_scatter').html('')
+        
+        draw(){
+            var data = this.scatterplotData
+            d3.select('#div_scatter svg').remove()
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
-            var w = 380, margin=5;
-            var h = 280;
+            var w = 420, margin=5;
+            var h = 260;
             var r = 3.5;
             var that = this;
 
+
+            function zoomed() {
+                // console.log(d3.event.transform)
+                // this.hexbin_radius_ratio = parseInt(d3.event.transform.k)
+                g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+                // g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // not in d3 v4
+                g.attr("transform", d3.event.transform); // updated for d3 v4
+            }
+            var zoom = d3.zoom() 
+            .scaleExtent([1, 8])
+            .on("zoom", zoomed);
             var svg = d3.select("#div_scatter").append("svg")
                 .attr("width",w+margin)
-                .attr("height",h+margin);
-           
+                .attr("height",h+margin)
+                .call(zoom);
+
             var scale_x = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.x))
                 .range([ r, w ]);
             var scale_y = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.y))
                 .range([ r, h ]);
-            var circles = svg.selectAll("circle")
-                .data(data)
-                .enter()
-                .append("circle")
-                .attr('class',function(d){
-                    if(d['anomaly_label']==0){
-                        return 'normal';
-                    }else{
-                        return 'abnormal'
-                    }
+             // Reformat the data: d3.hexbin() needs a specific format
+            var inputForHexbinFun = []
+            data.forEach(function(d) {
+                inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label'], d] )  // Note that we had the transform value of X and Y !
+            })
+             // Prepare a color palette
+            var color = d3.scaleLinear()
+                .domain([0, 289]) // Number of points in the bin?
+                .range(["transparent",  "#69b3a2"])
+
+            // Compute the hexbin data
+            var hexbin = d3Hexbin.hexbin()
+                .radius(4*(20/that.hexbin_radius_ratio))// size of the bin in px
+                .extent([ [0, 0], [w+margin, h+margin] ])
+            var colors = d3.scaleOrdinal(d3.schemeCategory10).range().slice(0, 4);
+            var attenuation = d3.scaleLog().range([0,1]);
+
+            // Plot the hexbins
+            svg.append("clipPath")
+                .attr("id", "clip")
+                .append("rect")
+                .attr("width", w+margin)
+                .attr("height", h+margin)
+            var g = svg.append("g")
+                g.attr("clip-path", "url(#clip)")
+                .selectAll("path")
+                .data( hexbin(inputForHexbinFun) )
+                .enter().append("path")
+                .attr("d", hexbin.hexagon())
+                .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+                .on('mouseover', function (d, i) {
+                    
+                    d3.select(this).style('stroke-width','1')
                 })
-                .attr("cx",d=>scale_x(d['x']))
-                .attr("cy",d=>scale_y(d['y']))
-                .attr("r",r)
-                
-            // Lasso functions
-            var lasso_start = function() {
-                that.lasso_selected = []
-                lasso.items()
-                    .attr("r",3.5) // reset size
-                    .classed("not_possible",true)
-                    .classed("selected",false);
-            };
-
-            var lasso_draw = function() {
-            
-                // Style the possible dots
-                lasso.possibleItems()
-                    .classed("not_possible",false)
-                    .classed("possible",true);
-
-                // Style the not possible dot
-                lasso.notPossibleItems()
-                    .classed("not_possible",true)
-                    .classed("possible",false);
-            };
-
-            var lasso_end = function() {
-                // Reset the color of all dots
-                lasso.items()
-                    .classed("not_possible",false)
-                    .classed("possible",false);
-
-                // Style the selected dots
-                var selected_nodes = lasso.selectedItems()
-                    .classed("selected",true)
-                    .attr("r",7)
-                    .attr('test', function(d){
-                        that.lasso_selected.push(d)
+                .on('mouseout', function(d,i){
+                    // console.log(d)
+                    d3.select(this).style('stroke-width','0.1')
+                })
+                .on('click', function(d,i){
+                    that.lasso_selected = []
+                    d.forEach(function(p){
+                        that.lasso_selected.push(p[3])
+                    })
+                    that.request_postLog()
+                })
+                .attr("fill", function(d, i) { 
+                    var counts = [0,0];
+                    d.forEach(function(p) {
+                        let index = parseInt(p[2])
+                        counts[index]++;
                     });
-
-                // Reset the style of the not selected dots
-                lasso.notSelectedItems()
-                    .attr("r",3.5);
-                that.request_postLog()
-            };
-            //  var lasso = .lasso();
-            var lasso = d3Lasso.lasso()
-                .closePathSelect(true)
-                .closePathDistance(100)
-                .items(circles)
-                .targetArea(svg)
-                .on("start",lasso_start)
-                .on("draw",lasso_draw)
-                .on("end",lasso_end);
-            
-            svg.call(lasso);
+                    // // console.log(counts)
+                    let output = counts.reduce(function(p, c, i) { 
+                        let temp = d3.interpolateLab(p, colors[i])(c / d.length);
+                        // console.log(temp)
+                        return temp
+                    }, "white")
+                    // // console.log(output)
+                    return output;
+                    // console.log(d.length)
+                    // return color(d.length);
+                 })
+                .style('fill-opacity', function(d) { return attenuation(d.length); })
+                .attr("stroke", "black")
+                .attr("stroke-width", "0.1")        
         },
-        // draw_hexbin(data){
+        // draw(data){
         //     console.log(data)
         //     d3.select('#div_scatter').html('')
         //     // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
@@ -344,75 +360,88 @@ export default{
         //     var h = 280;
         //     var r = 3.5;
         //     var that = this;
-                
 
         //     var svg = d3.select("#div_scatter").append("svg")
         //         .attr("width",w+margin)
         //         .attr("height",h+margin);
-            
-
+           
         //     var scale_x = d3.scaleLinear()
         //         .domain(d3.extent(data, d => d.x))
         //         .range([ r, w ]);
         //     var scale_y = d3.scaleLinear()
         //         .domain(d3.extent(data, d => d.y))
         //         .range([ r, h ]);
-        //      // Reformat the data: d3.hexbin() needs a specific format
-        //     var inputForHexbinFun = []
-        //     data.forEach(function(d) {
-        //         inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label']] )  // Note that we had the transform value of X and Y !
-        //     })
-        //      // Prepare a color palette
-        //     var color = d3.scaleLinear()
-        //         .domain([0, 289]) // Number of points in the bin?
-        //         .range(["transparent",  "#69b3a2"])
-
-        //     // Compute the hexbin data
-        //     var hexbin = d3Hexbin.hexbin()
-        //         .radius(9) // size of the bin in px
-        //         .extent([ [0, 0], [w, h] ])
-        //     var colors = d3.scaleOrdinal(d3.schemeCategory10).range().slice(0, 4);
-        //     var attenuation = d3.scaleLog().range([0,1]);
-
-        //     // Plot the hexbins
-        //     svg.append("clipPath")
-        //         .attr("id", "clip")
-        //         .append("rect")
-        //         .attr("width", w)
-        //         .attr("height", h)
-        //      svg.append("g")
-        //         .attr("clip-path", "url(#clip)")
-        //         .selectAll("path")
-        //         .data( hexbin(inputForHexbinFun) )
-        //         .enter().append("path")
-        //         .attr("d", hexbin.hexagon())
-        //         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-        //         .attr("fill", function(d, i) { 
-        //             var counts = [0,0];
-        //             d.forEach(function(p) {
-        //                 let index = parseInt(p[2])
-        //                 counts[index]++;
-        //             });
-        //             // // console.log(counts)
-        //             let output = counts.reduce(function(p, c, i) { 
-        //                 let temp = d3.interpolateLab(p, colors[i])(c / d.length);
-        //                 // console.log(temp)
-        //                 return temp
-        //             }, "white")
-        //             // // console.log(output)
-        //             return output;
-        //             // console.log(d.length)
-        //             // return color(d.length);
-        //          })
-        //         .style('fill-opacity', function(d) { return attenuation(d.length); })
-        //         .attr("stroke", "black")
-        //         .attr("stroke-width", "0.1")
-
-            
-
+        //     var circles = svg.selectAll("circle")
+        //         .data(data)
+        //         .enter()
+        //         .append("circle")
+        //         .attr('class',function(d){
+        //             if(d['anomaly_label']==0){
+        //                 return 'normal';
+        //             }else{
+        //                 return 'abnormal'
+        //             }
+        //         })
+        //         .attr("cx",d=>scale_x(d['x']))
+        //         .attr("cy",d=>scale_y(d['y']))
+        //         .attr("r",r)
                 
-        // },
-       
+        //     // Lasso functions
+        //     var lasso_start = function() {
+        //         that.lasso_selected = []
+        //         lasso.items()
+        //             .attr("r",3.5) // reset size
+        //             .classed("not_possible",true)
+        //             .classed("selected",false);
+        //     };
+
+        //     var lasso_draw = function() {
+            
+        //         // Style the possible dots
+        //         lasso.possibleItems()
+        //             .classed("not_possible",false)
+        //             .classed("possible",true);
+
+        //         // Style the not possible dot
+        //         lasso.notPossibleItems()
+        //             .classed("not_possible",true)
+        //             .classed("possible",false);
+        //     };
+
+        //     var lasso_end = function() {
+        //         // Reset the color of all dots
+        //         lasso.items()
+        //             .classed("not_possible",false)
+        //             .classed("possible",false);
+
+        //         // Style the selected dots
+        //         var selected_nodes = lasso.selectedItems()
+        //             .classed("selected",true)
+        //             .attr("r",7)
+        //             .attr('test', function(d){
+        //                 that.lasso_selected.push(d)
+        //             });
+
+        //         // Reset the style of the not selected dots
+        //         lasso.notSelectedItems()
+        //             .attr("r",3.5);
+        //         that.request_postLog()
+        //     };
+        //     //  var lasso = .lasso();
+        //     var lasso = d3Lasso.lasso()
+        //         .closePathSelect(true)
+        //         .closePathDistance(100)
+        //         .items(circles)
+        //         .targetArea(svg)
+        //         .on("start",lasso_start)
+        //         .on("draw",lasso_draw)
+        //         .on("end",lasso_end);
+            
+        //     svg.call(lasso);
+        // }
+    
+    
+    
     },
     watch:{
         selected_project(){
@@ -420,7 +449,8 @@ export default{
         },
         selected_app(){
             this.request_postScatter()
-        }
+        },
+        
     },
     mounted(){
 
@@ -494,5 +524,10 @@ circle {
 }
 .el-row {
     margin-bottom:5px
+}
+.el-slider__button {
+    width: 6px;
+    height: 6px;
+    /* margin-top: 10px; */
 }
 </style>

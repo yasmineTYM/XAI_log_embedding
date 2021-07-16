@@ -145,41 +145,6 @@ def postLog():
                 'group':i,
                 'value': embedding_list[i]
             })
-    # if event_type == 'count':
-    #     output = []
-    #     y_values = []
-    #     x_values = []
-    #     for i in instance_ids:
-    #         for j in unique_label_list:
-    #             x_values.append(str(i)+'_'+str(j))
-    #     for index, row in selected_pd.iterrows():
-    #         y_values.append(index)
-    #         log_count = ast.literal_eval(row[attribute])
-    #         counter=collections.Counter(log_count)
-    #         for label in unique_label_list:
-    #             if label in counter.keys():
-    #                 output.append({
-    #                     'group': row['app']+'_'+str(label),
-    #                     'variable': index,
-    #                     'value': counter[label]
-    #                 })
-    # else:
-    #     output = []
-        # x_values = []
-        # y_values = []
-        # for index, row in selected_pd.iterrows():
-        #     y_values.append(index)
-        #     log_list = ast.literal_eval(row[attribute])
-        #     for i in range(len(log_list)):
-        #         if i not in x_values:
-        #             x_values.append(i)
-        #         output.append({
-        #             'variable':index,
-        #             'group': i,
-        #             'value': log_list[i]
-        #         })
-            
-
     return jsonify({
         'data_error': output_error,
         'data_template':output_template,
