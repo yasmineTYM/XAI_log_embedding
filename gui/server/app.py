@@ -202,11 +202,11 @@ def postEmbedding():
 
 @app.route('/getTree', methods=['GET'])
 def getTree():
-
-    # with open('../../../../Data/XAI/carts/embeddings/log_level/log_by_app/with_label/keywords/tree_data.txt') as json_file:
-    #     treeData = json.load(json_file)
-    with open('../../../../Data/gui/timeline/data.json') as json_file:
-        treeData = json.load(json_file)
-    return jsonify(treeData)
+    data = []
+    with open('../../../../Data/gui/timeline/fault_tree/memory_hog.json') as f:
+        for line in f:
+            data.append(json.loads(line))
+    
+    return jsonify(data)
 if __name__ == '__main__':
     app.run()

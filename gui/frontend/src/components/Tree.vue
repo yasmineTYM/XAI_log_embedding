@@ -1,22 +1,31 @@
 <template>
     <div>
          <el-row>
-            <el-col :span="4">
-                <div style="height:540px; border: 1px solid black;border-radius: 5px; margin-right:3px;">
+            <el-col :span="5">
+                
+                <div style="height:540px; border: 1px solid black;border-radius: 5px; margin-right:3px;overflow:scroll">
                     <el-row  class="scatter_row">
 
                     </el-row>
-                    <div id="div_timeline">
-                       
+                    <div>
+                        <div id="div_timeline"></div>
+                        <el-timeline :v-if="show_tree">
+                            <el-timeline-item  v-for="(activity, index) in tree_items" :timestamp="activity.utc_timestamp" placement="top" :class="activity.abnormal_flag">
+                                <el-card>
+                                    <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
+                                    <span class="timeline_detail">title: {{activity.alert.title}}</span>
+                                    <div :onload="test()"></div>
+                                </el-card>
+                            </el-timeline-item>
+                        </el-timeline>
                     </div>
                 </div>
                 
             </el-col>
-            <el-col :span="20">
+            <el-col :span="19">
+                 
                  <div style="height:540px; border: 1px solid black;border-radius: 5px;">
-                    <el-row  class="scatter_row">
-
-                    </el-row>
+                   <el-row  class="scatter_row"></el-row>
                     <div id="div_detail"></div>
                 </div>
                 
@@ -36,7 +45,9 @@ import * as eventDrops from 'event-drops';
 export default{
     data(){
         return{
-           text_detail:'ttt'
+           text_detail:'ttt',
+           tree_items: null,
+           show_tree: false
         }
     },
     
@@ -45,6 +56,9 @@ export default{
         
     },
     methods: {
+        test(){
+            console.log('test tym')
+        },
         drawTimeline(){
             var testData = [
                 {label: "person a", times: [
@@ -56,10 +70,10 @@ export default{
                     {"starting_time": 1355761910000, "ending_time": 1355763910000}]}
             ];
             var chart = d3Timeline.timelines()
-            .axisZoom()
+            // .axisZoom()
             .orient('top');
 
-            var svg = d3.select("#div_timeline").append("svg").attr("width", 500)
+            var svg = d3.select("#div_timeline").append("svg").attr("width", 400)
             .datum(testData).call(chart);
 
         },
@@ -68,8 +82,11 @@ export default{
             
             axios.get(path)
             .then((res)=>{
+                // console.log(JSON.parse(res.data))
+                console.log(res.data)
                 this.drawTimeline()
-                
+                this.tree_items = res.data
+                this.show_tree = true
                 // this.drawEventDrops(eventDropData)
             })
             .catch((error)=>{
@@ -379,5 +396,37 @@ export default{
   stroke-width: 2px;
 }
 
+.el-timeline-item__tail{
+    border-left: 2px solid #D6D2C4
+}
+.normal .el-timeline-item__node{
+    background-color: #9DAB86
+}
+.abnormal .el-timeline-item__node{
+    background-color: #CC7351
+}
+.normal .el-timeline-item__node{
+    background-color: #9DAB86
+}
+.both .el-timeline-item__node{
+    background-color: #CC7351
+}
+.unknown .el-timeline-item__node{
+    background-color: #CC7351
+}
 
+.el-timeline-item__content{
+    width:350px;
+}
+.el-card__body{
+    height:200px;
+    padding:0px;
+    text-align: start;
+    
+}
+.timeline_detail{
+    margin-left: 20px;
+    padding-top:10px;
+    /* border-left: steelblue 3px solid; */
+}
 </style>
