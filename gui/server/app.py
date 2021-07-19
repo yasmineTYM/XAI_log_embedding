@@ -205,8 +205,13 @@ def getTree():
     data = []
     with open('../../../../Data/gui/timeline/fault_tree/memory_hog.json') as f:
         for line in f:
-            data.append(json.loads(line))
-    
-    return jsonify(data)
+            temp = json.loads(line)
+            data.append(temp)
+    new_data =[]
+    for index in range(len(data)):
+        temp = data[index]
+        temp['div_id'] = 'div'+ str(index)
+        new_data.append(temp)
+    return jsonify(new_data)
 if __name__ == '__main__':
     app.run()

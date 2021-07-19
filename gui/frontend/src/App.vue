@@ -3,7 +3,7 @@
       <el-row style="height:350px">
         <Embed/>
       </el-row>
-      <el-row style="height:580px">
+      <el-row style="height:680px">
          <Tree/>
       </el-row>
 

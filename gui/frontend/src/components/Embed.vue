@@ -259,7 +259,7 @@ export default{
             var data = this.scatterplotData
             d3.select('#div_scatter svg').remove()
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
-            var w = 420, margin=5;
+            var w = 350, margin=5;
             var h = 260;
             var r = 3.5;
             var that = this;
@@ -348,7 +348,10 @@ export default{
                     // console.log(d.length)
                     // return color(d.length);
                  })
-                .style('fill-opacity', function(d) { return attenuation(d.length); })
+                .style('opacity', function(d) { 
+                    let temp = attenuation(d.length)
+                    // console.log(temp)
+                    return temp; })
                 .attr("stroke", "black")
                 .attr("stroke-width", "0.1")        
         },
