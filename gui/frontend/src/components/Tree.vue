@@ -1,31 +1,27 @@
 <template>
     <div>
          <el-row>
-            <el-col :span="5">
-                
-                <div style="height:640px; border: 1px solid black;border-radius: 5px; margin-right:3px;overflow:scroll">
-                    <el-row  class="scatter_row">
-
-                    </el-row>
+            <el-col :span="5" style="border-right:1px solid grey">
+                <div style="overflow:scroll;height:620px">
                     <div>
                         <div id="div_timeline"></div>
                         <el-timeline>
                             <el-timeline-item v-for="(activity, index) in tree_items" :timestamp="activity.utc_timestamp" placement="top" :class="activity.abnormal_flag">
-                                <el-card>
+                                <el-card shadow="hover">
                                     <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
                                     <span class="timeline_detail">title: {{activity.alert.title}}</span>
+                                    <el-button style="float: right; padding: 3px 0" type="text" @click="checkLogline(activity)">Select</el-button>
                                     <div :id="activity.div_id"></div>
                                 </el-card>
                             </el-timeline-item>
                         </el-timeline>
                     </div>
                 </div>
-                
             </el-col>
             <el-col :span="19">
                  
-                 <div style="height:640px; border: 1px solid black;border-radius: 5px;">
-                   <el-row  class="scatter_row"></el-row>
+                 <div style="height:620px; width: 1500px;overflow:scroll">
+                   <!-- <el-row  class="scatter_row"></el-row> -->
                     <div id="div_detail"></div>
                 </div>
                 
@@ -60,6 +56,32 @@ export default{
 
     },
     methods: {
+        checkLogline(data){
+            console.log(data)
+            
+            d3.select('#div_detail').html('')
+
+            const svg = d3.select('#div_detail')
+                .append('svg')
+                .attr('width', 1300)
+                .attr('height', 600)
+                .append('g');
+            
+            // ===================== step1, append line 
+            svg.append('line')
+            .style('stroke', 'grey')
+            .style('stroke-width',3)
+            .attr('x1',10)
+            .attr('x2',1300)
+            .attr('y1', 100)
+            .attr('y2', 100);
+
+            // ===================step2, append rectangle 
+            var embedding_lists = data['log_embeddings']
+
+
+
+        },
         drawDetail(div_id, raw){
             var ti = raw['template_ids']
             var cv = raw['count_vector']
@@ -111,7 +133,7 @@ export default{
             var v1 = d3.extent(data, d => d.countv)[1]
             var v2 = d3.extent(data, d=> d.ecountv)[1]
             
-            console.log(v1,)
+            // console.log(v1,)
              // Add Y axis
             var y = d3.scaleLinear()
                 .domain([0, d3.max([v1, v2])])
@@ -139,7 +161,7 @@ export default{
                 .selectAll("rect")
                 .data(function(d) { 
                     let temp = subgroups.map(function(key) { return {key: key, value: d[key]}; })
-                    console.log(temp)
+                    // console.log(temp)
                     return temp; })
                 .enter().append("rect")
                 .attr("x", function(d) { return xSubgroup(d.key); })
@@ -196,11 +218,11 @@ export default{
             axios.get(path)
             .then((res)=>{
                 // console.log(JSON.parse(res.data))
-                console.log(res.data)
+                // console.log(res.data)
                 this.drawTimeline()
                 this.tree_items = res.data
                 this.show_tree = true
-                console.log(this.show_tree)
+                // console.log(this.show_tree)
                 // this.drawEventDrops(eventDropData)
             })
             .catch((error)=>{
@@ -484,24 +506,27 @@ export default{
         show_tree(){
             var that = this
             setTimeout(function () {
-                console.log('test')
-                console.log(d3.select('#div0'))
+                // console.log('test')
+                // console.log(d3.select('#div0'))
                 that.tree_items.forEach(function(d){
                     that.drawDetail(d['div_id'], d['alert']['features'][0]['value']['log_anomaly_data']['text_dict'])
                 })
             }, 10);
             
         },
-        // showDetail(){
-        //     this.showDetail2 = true
-        // }
+        SELECTED_APP(){
+            console.log(this.SELECTED_APP)
+        }
 
     },
     mounted(){
 
     },
     computed:{
-
+        SELECTED_APP(){
+            // console.log(this.$store.getters.MODEL)
+            return this.$store.getters.SELECTED_APP
+        },
     }
 }
 </script>

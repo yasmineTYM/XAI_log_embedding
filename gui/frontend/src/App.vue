@@ -1,9 +1,9 @@
 <template>
-  <div id="app">
-      <el-row style="height:350px">
+  <div id="app" style="border: 1px solid black;border-radius: 5px;">
+      <el-row style="height:360px; border-bottom:1px solid grey">
         <Embed/>
       </el-row>
-      <el-row style="height:680px">
+      <el-row style="height:620px">
          <Tree/>
       </el-row>
 

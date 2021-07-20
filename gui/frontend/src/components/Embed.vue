@@ -1,50 +1,31 @@
 <template>
     <div>
+        <el-row class="scatter_row">
+            <el-col :span="12">
+                <el-select v-model="selected_app" placeholder="application">
+                    <el-option
+                    v-for="item in applications"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+            <el-col :span="12">
+                <el-select v-model="selected_project" placeholder="projections">
+                    <el-option
+                    v-for="item in projections"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                    </el-option>
+                </el-select>
+            </el-col>
+        </el-row>
         <el-row>
-            <el-col :span="5">
-                <div style="height:350px; border: 1px solid black; margin-right:3px;border-radius: 5px;">
-                    <el-row class="scatter_row">
-                        <el-col :span="12">
-                            <el-select v-model="selected_app" placeholder="application">
-                                <el-option
-                                v-for="item in applications"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                                </el-option>
-                            </el-select>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-select v-model="selected_project" placeholder="projections">
-                                <el-option
-                                v-for="item in projections"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                                </el-option>
-                            </el-select>
-                        </el-col>
-                        <!-- <el-col :span="6">
-                            <el-select v-model="selected_attribute" placeholder="log Info">
-                                <el-option
-                                v-for="item in attributes"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                                </el-option>
-                            </el-select>
-                        </el-col>
-                        <el-col :span="6">
-                            <el-select v-model="selected_event" placeholder="event/not">
-                                <el-option
-                                v-for="item in events"
-                                :key="item.value"
-                                :label="item.label"
-                                :value="item.value">
-                                </el-option>
-                            </el-select>
-                        </el-col> -->
-                    </el-row>
+            <el-col :span="5" style="border-right:1px solid grey">
+                <div style="height:320px;">
+                    
                     <el-row>
                         <div id="div_scatter">
                             <el-slider v-model="hexbin_radius_ratio" style="width:70px; margin-left:5px" @change="draw"></el-slider>
@@ -53,9 +34,9 @@
                 </div>
             </el-col>
             <el-col :span="19">
-                <div style="height:350px; border: 1px solid black;border-radius: 5px;">
-                    <el-row class="scatter_row">
-                    </el-row>
+                <div style="height:320px;">
+                    <!-- <el-row class="scatter_row">
+                    </el-row> -->
                     <el-row>
                         <el-col :span="3">
                             <div id="div_heatmap_count_error"></div>
@@ -164,7 +145,7 @@ export default{
                 this.draw_heatmap(180,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
                 this.draw_heatmap(180,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
                 this.draw_heatmap(180,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], res.data['x_embedding'], res.data['y_values'])
-                this.draw_heatmap(500,'Sequence of Error Flag','#div_heatmap_sequence_error', res.data['sequence_error'], res.data['sequence_x'], res.data['y_values'])
+                // this.draw_heatmap(500,'Sequence of Error Flag','#div_heatmap_sequence_error', res.data['sequence_error'], res.data['sequence_x'], res.data['y_values'])
             })
         },
         draw_heatmap(size,Title,div_id,DATA,myGroups,myVars){
@@ -172,7 +153,7 @@ export default{
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
             var margin = {top: 30, right: 10, bottom: 50, left: 50},
-            width = size - margin.left - margin.right,
+            width = d3.max([200,myGroups.length*20]) - margin.left - margin.right,
             height = 310 - margin.top - margin.bottom;
             // append the svg object to the body of the page
             var svg = d3.select(div_id)
@@ -247,11 +228,11 @@ export default{
             // });
 
 
-            var ticks = d3.selectAll('#div_heatmap_count_embedding'+" .x_axis .tick text");
-            var space = parseInt(DATA.length/5)
-            ticks.each(function(_,i){
-                if(i%space !== 0) d3.select(this).remove();
-            });
+            // var ticks = d3.selectAll('#div_heatmap_count_embedding'+" .y_axis .tick text");
+            // var space = parseInt(DATA.length/5)
+            // ticks.each(function(_,i){
+            //     if(i%space !== 0) d3.select(this).remove();
+            // });
 
         },
         
@@ -451,6 +432,7 @@ export default{
             this.request_postScatter()
         },
         selected_app(){
+            this.$store.commit('updateSELECTED_APP', this.selected_app)
             this.request_postScatter()
         },
         

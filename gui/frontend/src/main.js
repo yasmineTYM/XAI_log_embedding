@@ -7,6 +7,7 @@ import BootstrapVue from "bootstrap-vue"
 import 'element-ui/lib/theme-chalk/index.css'
 import locale from 'element-ui/lib/locale/lang/en'
 import ElementUI from 'element-ui'
+import {store} from './store/store'
 
 Vue.config.productionTip = false
 Vue.use(BootstrapVue);
@@ -15,6 +16,7 @@ Vue.use(ElementUI, {locale})
 new Vue({
   el: '#app',
   router,
+  store,
   components: { App },
   template: '<App/>'
 })
