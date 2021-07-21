@@ -96,6 +96,7 @@ export default{
             
            
             var rect = logline.append('rect')
+            .attr("rx", 4)
             .attr('width', rect_width)
             .attr('height', rect_height)
             .attr('x',function(d,i){
@@ -109,6 +110,13 @@ export default{
                     return '#d73027'
                 }
             })
+            .on('click', function(d){
+                console.log(d)
+            })
+            rect.append('title')
+            .text(function(d){
+                return d['message']
+            })
             // ================== step3: append text ==================
             var text = logline.append('text')
             .text(function(d){
@@ -119,6 +127,8 @@ export default{
                 return (i+0.5)*rect_width + (i+1)*space
             })
             .attr('y', y_position+3)
+           
+            .style('pointer-events', 'none')
 
 
             var x_mapping = []
@@ -330,7 +340,7 @@ export default{
             axios.get(path)
             .then((res)=>{
                 // console.log(JSON.parse(res.data))
-                // console.log(res.data)
+                console.log(res.data)
                 this.drawTimeline()
                 this.tree_items = res.data
                 this.show_tree = true

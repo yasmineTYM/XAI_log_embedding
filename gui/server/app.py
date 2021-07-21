@@ -7,6 +7,7 @@ import collections
 import json
 import random 
 # configuration
+from scipy.spatial import distance
 import umap 
 from sklearn.manifold import TSNE
 DEBUG = True
@@ -222,13 +223,19 @@ def getTree():
 def postTree():
     data = []
     app = request.get_json()['app']
-    with open('../../../../Data/gui/timeline/fault_tree/memory_hog.json') as f:
-        for line in f:
-            temp = json.loads(line)
-            if app=='all':
+    if app=='all':
+        with open('../../../../Data/gui/timeline/fault_tree/cpu_hog.json') as f:
+            for line in f:
+                temp = json.loads(line)
                 data.append(temp)
-            elif temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']==app:
-                data.append(temp)
+    else:
+        with open('../../../../Data/gui/timeline/fault_tree/cpu_hog.json') as f:
+            for line in f:
+                temp = json.loads(line)
+                this_app = temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']
+                # print(this_app)
+                if this_app==app:
+                    data.append(temp)
     new_data =[]
     for index in range(len(data)):
         temp = data[index]
@@ -260,14 +267,13 @@ def postLogline():
     scatterplot = request.get_json()['scatterplot']
     scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
     
-    # embedding_ = []
-    # for ele in scatterplot_pd['embeddings'].tolist():
-    #     embedding_.append(ast.literal_eval(ele))
     
-
     embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
     new_embedding = request.get_json()['window_embedding']
-    print(new_embedding)
+    # embedding_=[]
+    # for ele in scatterplot_pd['embeddings'].tolist():
+    #     embedding_.append(ast.literal_eval(ele))
+    # print(new_embedding)
     list(embedding_).append(new_embedding)
 
     # print(np.array(embedding_).shape)
@@ -302,7 +308,7 @@ def postLogline():
     temp9 = list(scatterplot_pd['y'].tolist())
     temp9.append(X_embedded[-1,1])
 
-    print(X_embedded[-1,0],X_embedded[-1,1])
+    # print(X_embedded[-1,0],X_embedded[-1,1])
     scatterplot_output = pd.DataFrame({
         'x': temp8,
         'y': temp9,
@@ -314,10 +320,24 @@ def postLogline():
         'highlight':temp5,
         'template_ids':temp6,
     })
+    ## ================================ data for panel D: reference windowed embedding ================================
+    # distance_list = []
+    # embedding_selected = scatterplot_pd['embeddings'].tolist()
+    # for ele in embedding_selected:
+    #     temp = ast.literal_eval(ele)
+    #     dis = distance.euclidean(new_embedding, temp)
+    #     distance_list.append(dis)
+    # mini_id  = distance_list.index(min(distance_list))
 
+    # ref = scatterplot_pd.iloc[mini_id]
     return jsonify({
         'panel_d':output,
-        'scatterplot':scatterplot_output.to_dict('records')
+        'scatterplot':scatterplot_output.to_dict('records'),
+        # 'reference': {
+        #     'embedding_ids': ref['embedding_ids'],
+        #     'error_flag': ref['error_flag'],
+        #     'template_ids': ref['template_ids']
+        # }
     })
 if __name__ == '__main__':
     app.run()
