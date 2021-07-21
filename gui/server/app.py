@@ -5,7 +5,10 @@ import numpy as np
 import ast 
 import collections
 import json
+import random 
 # configuration
+import umap 
+from sklearn.manifold import TSNE
 DEBUG = True
 
 # instantiate the app
@@ -29,8 +32,9 @@ def postScatter():
     project = params['projection']
     
     # data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
-    data = pd.read_csv('../../../../Data/gui/scatterplot/'+project+'.csv')
+    data = pd.read_csv('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/'+project+'.csv')
     print(type(data))
+    data['highlight'] = list(np.zeros(len(data)))
     if application =='all':
         # data = data.to_dict(orient="records")
         # print(type(data))
@@ -203,7 +207,7 @@ def postEmbedding():
 @app.route('/getTree', methods=['GET'])
 def getTree():
     data = []
-    with open('../../../../Data/gui/timeline/fault_tree/memory_hog.json') as f:
+    with open('../../../../Data/gui/timeline/fault_tree/cpu_hog.json') as f:
         for line in f:
             temp = json.loads(line)
             data.append(temp)
@@ -213,5 +217,107 @@ def getTree():
         temp['div_id'] = 'div'+ str(index)
         new_data.append(temp)
     return jsonify(new_data)
+
+@app.route('/postTree', methods=['POST'])
+def postTree():
+    data = []
+    app = request.get_json()['app']
+    with open('../../../../Data/gui/timeline/fault_tree/memory_hog.json') as f:
+        for line in f:
+            temp = json.loads(line)
+            if app=='all':
+                data.append(temp)
+            elif temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']==app:
+                data.append(temp)
+    new_data =[]
+    for index in range(len(data)):
+        temp = data[index]
+        temp['div_id'] = 'div'+ str(index)
+        new_data.append(temp)
+    return jsonify(new_data)
+
+@app.route('/postLogline', methods =['POST'])
+def postLogline():
+    ## ================================ data for panel D: related log embeddings info ================================
+    log_embeddings = request.get_json()['log_embeddings']
+    output = []
+    reference = pd.read_json('../../../../Data/XAI/baseline/log_embedding_template.json', lines=True)
+    reference['embeddings'] = reference.embeddings.apply(lambda x: [round(b,9) for b in x])
+    reference["embedding_string"] = reference.embeddings.apply(lambda x: str(x)) 
+    for i in log_embeddings:
+        new = [round(a,9) for a in i]
+        f = reference.loc[reference['embedding_string']==str(new)]
+        if len(f)==0:
+            print('error')
+        else:
+            # print(f.index.tolist())
+            temp = f.drop(['application_id', 'embedding_string'], axis=1).iloc[0].to_dict()
+            temp['positive_score'] = random.uniform(0, 1)
+            temp['positive_uncertainty'] = random.uniform(0, 1)
+            temp['negative_score'] = random.uniform(0, 1)
+            output.append(temp)
+    ##================================ data for scatterplot ================================
+    scatterplot = request.get_json()['scatterplot']
+    scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
+    
+    # embedding_ = []
+    # for ele in scatterplot_pd['embeddings'].tolist():
+    #     embedding_.append(ast.literal_eval(ele))
+    
+
+    embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
+    new_embedding = request.get_json()['window_embedding']
+    print(new_embedding)
+    list(embedding_).append(new_embedding)
+
+    # print(np.array(embedding_).shape)
+    projection = request.get_json()['projection']
+    # print(projection)
+    if projection=='tsne':
+        X_embedded = TSNE(n_components=2,random_state=27).fit_transform(embedding_)
+    else: 
+        X_embedded = umap.UMAP(random_state=27).fit_transform(embedding_)
+    
+    temp1 = list(scatterplot_pd['anomaly_label'].tolist())
+    temp1.append(0)
+
+    temp2 = list(scatterplot_pd['anomaly_label'].tolist())
+    temp2.append(request.get_json()['app'])
+
+    temp3 = list(scatterplot_pd['embedding_ids'].tolist())
+    temp3.append('')
+
+    temp4 = list(scatterplot_pd['error_flag'].tolist())
+    temp4.append('')
+
+    temp5 = list(scatterplot_pd['highlight'].tolist())
+    temp5.append(1)
+
+    temp6 = list(scatterplot_pd['template_ids'].tolist())
+    temp6.append('')
+    temp7 = list(scatterplot_pd['embeddings'].tolist())
+    temp7.append(new_embedding)
+    temp8 = list(scatterplot_pd['x'].tolist())
+    temp8.append(X_embedded[-1,0])
+    temp9 = list(scatterplot_pd['y'].tolist())
+    temp9.append(X_embedded[-1,1])
+
+    print(X_embedded[-1,0],X_embedded[-1,1])
+    scatterplot_output = pd.DataFrame({
+        'x': temp8,
+        'y': temp9,
+        'anomaly_label': temp1,
+        'app': temp2,
+        'embedding_ids':temp3,
+        'embeddings': temp7,
+        'error_flag': temp4,
+        'highlight':temp5,
+        'template_ids':temp6,
+    })
+
+    return jsonify({
+        'panel_d':output,
+        'scatterplot':scatterplot_output.to_dict('records')
+    })
 if __name__ == '__main__':
     app.run()

@@ -10,7 +10,7 @@
                                 <el-card shadow="hover">
                                     <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
                                     <span class="timeline_detail">title: {{activity.alert.title}}</span>
-                                    <el-button style="float: right; padding: 3px 0" type="text" @click="checkLogline(activity)">Select</el-button>
+                                    <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
                                     <div :id="activity.div_id"></div>
                                 </el-card>
                             </el-timeline-item>
@@ -20,9 +20,9 @@
             </el-col>
             <el-col :span="19">
                  
-                 <div style="height:620px; width: 1500px;overflow:scroll">
+                 <div style="height:620px; width: 1400px;overflow:scroll">
                    <!-- <el-row  class="scatter_row"></el-row> -->
-                    <div id="div_detail"></div>
+                    <div id="div_detail" v-loading="LOAD_D"></div>
                 </div>
                 
             </el-col>
@@ -45,6 +45,7 @@ export default{
            tree_items: null,
            show_tree: false,
            showDetail: true,
+           LOAD_D: false
         }
     },
     
@@ -56,33 +57,143 @@ export default{
 
     },
     methods: {
-        checkLogline(data){
-            console.log(data)
-            
+        drawLogline(data){
+            // console.log(data)
+            // this.postLogline(data)
             d3.select('#div_detail').html('')
+            const rect_width = 90
+            const rect_height = 30
+            const space = 10
 
-            const svg = d3.select('#div_detail')
-                .append('svg')
-                .attr('width', 1300)
-                .attr('height', 600)
-                .append('g');
+            var margin = {top: 10, right: 30, bottom: 40, left: 50},
+                width = d3.max([data.length*(rect_width+space), 1500]),
+                height = 600 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#div_detail")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
             
-            // ===================== step1, append line 
+            const y_position = 100
+            // ===================== step1, append line ==================
             svg.append('line')
             .style('stroke', 'grey')
             .style('stroke-width',3)
-            .attr('x1',10)
+            .attr('x1',0)
             .attr('x2',1300)
-            .attr('y1', 100)
-            .attr('y2', 100);
+            .attr('y1', y_position)
+            .attr('y2', y_position);
 
-            // ===================step2, append rectangle 
-            var embedding_lists = data['log_embeddings']
+            // ===================step2, append rectangle ==================
+            var logline = svg.selectAll('.rect')
+            .data(data)
+            .enter()
+            .append('g')
+            
+           
+            var rect = logline.append('rect')
+            .attr('width', rect_width)
+            .attr('height', rect_height)
+            .attr('x',function(d,i){
+                return i*rect_width + (i+1)*space
+            })
+            .attr('y', y_position-rect_height/2)
+            .attr('fill',function(d){
+                if(d['features'][0]['obj_value']['error_flag']=='false'){
+                    return '#91cf60'
+                }else{
+                    return '#d73027'
+                }
+            })
+            // ================== step3: append text ==================
+            var text = logline.append('text')
+            .text(function(d){
+                return d['instance_id']
+            })
+            .style('text-anchor','middle')
+            .attr('x',function(d,i){
+                return (i+0.5)*rect_width + (i+1)*space
+            })
+            .attr('y', y_position+3)
 
 
+            var x_mapping = []
+            for(let i=0; i<data.length;i++){
+                x_mapping.push(i)
+            }
+            var x = d3.scaleBand()
+                .domain(x_mapping)
+                .range([ 0, width ]);
 
+            // ================== step4: append score ==================
+
+            const score_range = 40
+            var y1 = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return +d.positive_score; })])
+            .range([ score_range, 0 ]);
+            
+            var y2 = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return +d.negative_score; })])
+            .range([ score_range, 0 ]);
+
+            var line_positive_data = []
+            var line_negative_data = []
+            data.forEach(function(d,i){
+                let x = (i+0.5)*rect_width + (i+1)*space
+                let y_positive = y_position - y1(d['positive_score'])
+                let y_negative = y_position + y2(d['negative_score'])
+                line_positive_data.push({
+                    'x': x,
+                    'y': (y_positive-rect_height/2),
+                })
+                line_negative_data.push({
+                    'x':x,
+                    'y':(y_negative+rect_height/2),
+                })
+            })
+
+            var lineGenerator = d3.line()
+            // .curve(d3.curveBasis)
+            // .curve(d3.curveLinear)
+            .curve(d3.curveCardinal)
+            .x(function(d){return d.x})
+            // .y0(function(d){return d.y0})
+            .y((p)=>p.y);
+
+            var path_positive = svg.append('path')
+            .attr('d', lineGenerator(line_positive_data))
+            .style('fill','white')
+            .style('stroke','black')
+            
+            var path_positive = svg.append('path')
+            .attr('d', lineGenerator(line_negative_data))
+            .style('fill','white')
+            .style('stroke','black')
+
+            var circles = svg.append('g')
+            .selectAll('.line_circle')
+            .data(line_positive_data)
+            .enter()
+            .append('circle')
+            .attr('cx', (d)=> d.x)
+            .attr('cy', (d)=> d.y)
+            .attr('r', 3)
+
+            var circles = svg.append('g')
+            .selectAll('.line_circle')
+            .data(line_negative_data)
+            .enter()
+            .append('circle')
+            .attr('cx', (d)=> d.x)
+            .attr('cy', (d)=> d.y)
+            .attr('r', 3)
         },
         drawDetail(div_id, raw){
+            d3.select('#'+div_id).html('')
             var ti = raw['template_ids']
             var cv = raw['count_vector']
             var ecv = raw['expected_count_vector']
@@ -195,6 +306,7 @@ export default{
             legend.transition().duration(500).delay(function(d,i){ return 1300 + 100 * i; }).style("opacity","1");
         },  
         drawTimeline(){
+            d3.select('#div_timeline').html('')
             var testData = [
                 {label: "person a", times: [
                     {"starting_time": 1355752800000, "ending_time": 1355759900000},
@@ -222,13 +334,30 @@ export default{
                 this.drawTimeline()
                 this.tree_items = res.data
                 this.show_tree = true
-                // console.log(this.show_tree)
-                // this.drawEventDrops(eventDropData)
             })
             .catch((error)=>{
                 console.log(error)
             })
 
+        },
+        postTreeData(){
+            this.show_tree = false
+            const path = "http://localhost:5000/postTree"
+            const payload = {
+                'app': this.SELECTED_APP
+            }
+            axios.post(path, payload)
+            .then((res)=>{
+                console.log(res.data)
+                
+                this.drawTimeline()
+                this.tree_items = res.data
+                this.show_tree = true
+             
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
         },
         drawTree(treeData){
             var that = this
@@ -499,6 +628,30 @@ export default{
                     })
                     .text(function(d) { return d.text; });
             }
+        },
+        postLogline(data){
+            console.log(data)
+            this.$store.commit('updateLOAD_B', true)
+            this.LOAD_D = true
+            const path = "http://localhost:5000/postLogline"
+            const payload = {
+                'log_embeddings': data['log_embeddings'],
+                'scatterplot': this.SCATTERPLOT,
+                'window_embedding': data['actual_embeddings'],
+                'projection': this.SELECTED_PROJECT,
+                'app': this.SELECTED_APP
+            }
+            axios.post(path, payload)
+            .then((res)=>{
+                console.log(res.data)
+                this.$store.commit('updateLOAD_B', false)
+                this.LOAD_D = false
+                this.drawLogline(res.data['panel_d'])
+                this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
         }
 
     },
@@ -511,11 +664,13 @@ export default{
                 that.tree_items.forEach(function(d){
                     that.drawDetail(d['div_id'], d['alert']['features'][0]['value']['log_anomaly_data']['text_dict'])
                 })
-            }, 10);
-            
+            }, 10);    
         },
         SELECTED_APP(){
-            console.log(this.SELECTED_APP)
+            this.postTreeData()
+        },
+        SCATTERPLOT(){
+            console.log(this.SCATTERPLOT)
         }
 
     },
@@ -524,9 +679,14 @@ export default{
     },
     computed:{
         SELECTED_APP(){
-            // console.log(this.$store.getters.MODEL)
             return this.$store.getters.SELECTED_APP
         },
+        SCATTERPLOT(){
+            return this.$store.getters.SCATTERPLOT
+        },
+        SELECTED_PROJECT(){
+            return this.$store.getters.SELECTED_PROJECT
+        }
     }
 }
 </script>

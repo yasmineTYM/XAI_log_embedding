@@ -27,7 +27,7 @@
                 <div style="height:320px;">
                     
                     <el-row>
-                        <div id="div_scatter">
+                        <div id="div_scatter" v-loading="LOAD_B">
                             <el-slider v-model="hexbin_radius_ratio" style="width:70px; margin-left:5px" @change="draw"></el-slider>
                         </div>
                     </el-row>
@@ -124,9 +124,10 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                console.log(res.data['test'])
+                // console.log(res.data['test'])
                 // console.log(res.data)
                 this.scatterplotData = res.data['test']
+                this.$store.commit('updateSCATTERPLOT', res.data['test'])
                 this.draw()
             })
             .catch((error)=>{
@@ -237,15 +238,16 @@ export default{
         },
         
         draw(){
-            var data = this.scatterplotData
-            d3.select('#div_scatter svg').remove()
+            // console.log('ttttt')
+            var data = this.SCATTERPLOT
+            d3.selectAll('#div_scatter svg').remove()
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
             var w = 350, margin=5;
             var h = 260;
             var r = 3.5;
             var that = this;
 
-
+            // console.log(data)
             function zoomed() {
                 // console.log(d3.event.transform)
                 // this.hexbin_radius_ratio = parseInt(d3.event.transform.k)
@@ -270,7 +272,7 @@ export default{
              // Reformat the data: d3.hexbin() needs a specific format
             var inputForHexbinFun = []
             data.forEach(function(d) {
-                inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label'], d] )  // Note that we had the transform value of X and Y !
+                inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label'], d,d['highlight']] )  // Note that we had the transform value of X and Y !
             })
              // Prepare a color palette
             var color = d3.scaleLinear()
@@ -282,8 +284,9 @@ export default{
                 .radius(4*(20/that.hexbin_radius_ratio))// size of the bin in px
                 .extent([ [0, 0], [w+margin, h+margin] ])
             var colors = d3.scaleOrdinal(d3.schemeCategory10).range().slice(0, 4);
+            
             var attenuation = d3.scaleLog().range([0,1]);
-
+            attenuation.domain([.1, d3.max(hexbin(inputForHexbinFun).map(function(d) { return d.length; }))]);
             // Plot the hexbins
             svg.append("clipPath")
                 .attr("id", "clip")
@@ -298,7 +301,7 @@ export default{
                 .attr("d", hexbin.hexagon())
                 .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
                 .on('mouseover', function (d, i) {
-                    
+                    console.log(d)
                     d3.select(this).style('stroke-width','1')
                 })
                 .on('mouseout', function(d,i){
@@ -315,7 +318,7 @@ export default{
                 .attr("fill", function(d, i) { 
                     var counts = [0,0];
                     d.forEach(function(p) {
-                        let index = parseInt(p[2])
+                        let index = parseInt(p[4])
                         counts[index]++;
                     });
                     // // console.log(counts)
@@ -435,13 +438,24 @@ export default{
             this.$store.commit('updateSELECTED_APP', this.selected_app)
             this.request_postScatter()
         },
+        selected_project(){
+            this.$store.commit('updateSELECTED_PROJECT', this.selected_project)
+        },
+        SCATTERPLOT(){
+            this.draw()
+        }
         
     },
     mounted(){
 
     },
     computed:{
-
+        LOAD_B(){
+            return this.$store.getters.LOAD_B
+        },
+        SCATTERPLOT(){
+            return this.$store.getters.SCATTERPLOT
+        }
     }
 }
 </script>
