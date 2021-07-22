@@ -37,7 +37,10 @@ import * as d3 from 'd3'
 import axios from 'axios'
 import cloud from "d3-cloud"
 import * as d3Timeline from 'd3-timelines'
-import * as eventDrops from 'event-drops';
+import eventDrops from '../src';
+// import '../src/style.css';
+// import { gravatar, humanizeDate } from './utils';
+// import * as eventDrops from 'event-drops';
 export default{
     data(){
         return{
@@ -57,6 +60,24 @@ export default{
 
     },
     methods: {
+        drawEventDrop(){
+            // console.log(eventDrops)
+            const chart = eventDrops({ d3 });
+
+            const repositoriesData = [
+                {
+                    name: 'test',
+                    data: [{ date: new Date('2020/08/23 14:21:31') }
+                    ,{ date: new Date('2020/08/24 13:24:57') },
+                    { date: new Date('2020/08/25 13:25:12') }/* ... */],
+                }
+            ];
+
+            d3
+                .select('#div_detail')
+                .data([repositoriesData])
+                .call(chart);
+        },
         drawLogline(data){
             // console.log(data)
             // this.postLogline(data)
@@ -344,6 +365,7 @@ export default{
                 this.drawTimeline()
                 this.tree_items = res.data
                 this.show_tree = true
+                
             })
             .catch((error)=>{
                 console.log(error)
@@ -657,7 +679,8 @@ export default{
                 this.$store.commit('updateLOAD_B', false)
                 this.LOAD_D = false
                 this.drawLogline(res.data['panel_d'])
-                this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
+                // this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
+                this.drawEventDrop()
             })
             .catch((error)=>{
                 console.log(error)
@@ -685,7 +708,15 @@ export default{
 
     },
     mounted(){
+         let recaptchaScript = document.createElement('script')
+        recaptchaScript.setAttribute('src', 'https://unpkg.com/d3')
+        let js2 = document.createElement('script')
+        js2.setAttribute('src','https://unpkg.com/event-drops')
 
+       
+
+        document.head.appendChild(recaptchaScript)
+        document.head.appendChild(js2)
     },
     computed:{
         SELECTED_APP(){
@@ -702,6 +733,7 @@ export default{
 </script>
 
 <style>
+@import 'https://unpkg.com/event-drops/dist/style.css';
 
 .node circle {
   fill: #fff;

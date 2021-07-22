@@ -264,62 +264,62 @@ def postLogline():
             temp['negative_score'] = random.uniform(0, 1)
             output.append(temp)
     ##================================ data for scatterplot ================================
-    scatterplot = request.get_json()['scatterplot']
-    scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
+    # scatterplot = request.get_json()['scatterplot']
+    # scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
     
     
-    embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
-    new_embedding = request.get_json()['window_embedding']
-    # embedding_=[]
-    # for ele in scatterplot_pd['embeddings'].tolist():
-    #     embedding_.append(ast.literal_eval(ele))
-    # print(new_embedding)
-    list(embedding_).append(new_embedding)
+    # embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
+    # new_embedding = request.get_json()['window_embedding']
+    # # embedding_=[]
+    # # for ele in scatterplot_pd['embeddings'].tolist():
+    # #     embedding_.append(ast.literal_eval(ele))
+    # # print(new_embedding)
+    # list(embedding_).append(new_embedding)
 
-    # print(np.array(embedding_).shape)
-    projection = request.get_json()['projection']
-    # print(projection)
-    if projection=='tsne':
-        X_embedded = TSNE(n_components=2,random_state=27).fit_transform(embedding_)
-    else: 
-        X_embedded = umap.UMAP(random_state=27).fit_transform(embedding_)
+    # # print(np.array(embedding_).shape)
+    # projection = request.get_json()['projection']
+    # # print(projection)
+    # if projection=='tsne':
+    #     X_embedded = TSNE(n_components=2,random_state=27).fit_transform(embedding_)
+    # else: 
+    #     X_embedded = umap.UMAP(random_state=27).fit_transform(embedding_)
     
-    temp1 = list(scatterplot_pd['anomaly_label'].tolist())
-    temp1.append(0)
+    # temp1 = list(scatterplot_pd['anomaly_label'].tolist())
+    # temp1.append(0)
 
-    temp2 = list(scatterplot_pd['anomaly_label'].tolist())
-    temp2.append(request.get_json()['app'])
+    # temp2 = list(scatterplot_pd['anomaly_label'].tolist())
+    # temp2.append(request.get_json()['app'])
 
-    temp3 = list(scatterplot_pd['embedding_ids'].tolist())
-    temp3.append('')
+    # temp3 = list(scatterplot_pd['embedding_ids'].tolist())
+    # temp3.append('')
 
-    temp4 = list(scatterplot_pd['error_flag'].tolist())
-    temp4.append('')
+    # temp4 = list(scatterplot_pd['error_flag'].tolist())
+    # temp4.append('')
 
-    temp5 = list(scatterplot_pd['highlight'].tolist())
-    temp5.append(1)
+    # temp5 = list(scatterplot_pd['highlight'].tolist())
+    # temp5.append(1)
 
-    temp6 = list(scatterplot_pd['template_ids'].tolist())
-    temp6.append('')
-    temp7 = list(scatterplot_pd['embeddings'].tolist())
-    temp7.append(new_embedding)
-    temp8 = list(scatterplot_pd['x'].tolist())
-    temp8.append(X_embedded[-1,0])
-    temp9 = list(scatterplot_pd['y'].tolist())
-    temp9.append(X_embedded[-1,1])
+    # temp6 = list(scatterplot_pd['template_ids'].tolist())
+    # temp6.append('')
+    # temp7 = list(scatterplot_pd['embeddings'].tolist())
+    # temp7.append(new_embedding)
+    # temp8 = list(scatterplot_pd['x'].tolist())
+    # temp8.append(X_embedded[-1,0])
+    # temp9 = list(scatterplot_pd['y'].tolist())
+    # temp9.append(X_embedded[-1,1])
 
-    # print(X_embedded[-1,0],X_embedded[-1,1])
-    scatterplot_output = pd.DataFrame({
-        'x': temp8,
-        'y': temp9,
-        'anomaly_label': temp1,
-        'app': temp2,
-        'embedding_ids':temp3,
-        'embeddings': temp7,
-        'error_flag': temp4,
-        'highlight':temp5,
-        'template_ids':temp6,
-    })
+    # # print(X_embedded[-1,0],X_embedded[-1,1])
+    # scatterplot_output = pd.DataFrame({
+    #     'x': temp8,
+    #     'y': temp9,
+    #     'anomaly_label': temp1,
+    #     'app': temp2,
+    #     'embedding_ids':temp3,
+    #     'embeddings': temp7,
+    #     'error_flag': temp4,
+    #     'highlight':temp5,
+    #     'template_ids':temp6,
+    # })
     ## ================================ data for panel D: reference windowed embedding ================================
     # distance_list = []
     # embedding_selected = scatterplot_pd['embeddings'].tolist()
@@ -332,7 +332,7 @@ def postLogline():
     # ref = scatterplot_pd.iloc[mini_id]
     return jsonify({
         'panel_d':output,
-        'scatterplot':scatterplot_output.to_dict('records'),
+        # 'scatterplot':scatterplot_output.to_dict('records'),
         # 'reference': {
         #     'embedding_ids': ref['embedding_ids'],
         #     'error_flag': ref['error_flag'],
