@@ -27,6 +27,7 @@ export default d3 => ({
     drop: {
         color: null,
         radius: 5,
+        hover_radius:8,
         date: d => new Date(d),
         onClick: () => {},
         onMouseOver: () => {},
@@ -34,7 +35,7 @@ export default d3 => ({
     },
     label: {
         padding: 20,
-        text: d => `${d.name} (${d.data.length})`,
+        text: d => `${d.name} (${d.fullData.length})`,
         width: 200,
     },
     indicator: {

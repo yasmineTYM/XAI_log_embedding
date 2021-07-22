@@ -1,3 +1,4 @@
+import { BIconDice3 } from 'bootstrap-vue';
 import uniqBy from 'lodash.uniqby';
 
 const filterOverlappingDrop = (xScale, dropDate) => d =>
@@ -14,6 +15,7 @@ export default (config, xScale,tym,d) => selection => {
         drop: {
             color: dropColor,
             radius: dropRadius,
+            hover_radius:dropHoverR,
             date: dropDate,
             onClick,
             onMouseOver,
@@ -26,7 +28,7 @@ export default (config, xScale,tym,d) => selection => {
     //         return Math.round(xScale(dropDate(d)))
     //     // })
     // })
-    console.log(tym)
+    // console.log(tym)
     var temp = []
     tym[0][0]['fullData'].forEach(function(d){
         temp.push(d)
@@ -43,26 +45,34 @@ export default (config, xScale,tym,d) => selection => {
 
    
    
-    drops.enter()
+    var circles = drops.enter()
         .append('circle')
         .classed('drop', true)
-        .on('click', onClick)
-        .on('mouseover', onMouseOver)
-        .on('mouseout', onMouseOut)
+        .on('click', function(d){
+            console.log(d)
+        })
+        .on('mouseover', function(d){
+            d3.select(this).attr('r',dropHoverR)
+        })
+        .on('mouseout', function(d){
+            circles.attr('r', dropRadius)
+        })
         .merge(drops)
         .attr('r', dropRadius)
-        .attr('fill', dropColor)
+        .attr('fill', function(d){
+            if(d['error_flag']=='true'){
+                return '#C05555'
+            }else{
+                return '#59886B'
+            }
+        })
         .attr('cx',function(d){
-            console.log(d);
-            // let cx = xScale(dropDate(d.fullData[0].date))
             let cx = xScale(dropDate(d.date))
-            
-            let cxx = xScale(d.date)
-            console.log(cx, cxx)
             return cx
         })
-        // .attr('cx', d => xScale(dropDate(d)));
-
+      // .attr('cx', d => xScale(dropDate(d)));
+    circles.append('title')
+    .text(function(d){return d.message})
     drops
         .exit()
         .on('click', null)

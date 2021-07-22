@@ -60,21 +60,30 @@ export default{
 
     },
     methods: {
-        drawEventDrop(){
-            // console.log(eventDrops)
+        drawEventDrop(data){
+            console.log(data)
             const chart = eventDrops({ d3 });
-
-            const repositoriesData = [
-                {
-                    name: 'test',
-                    data: [{ date: new Date('2020/08/23 14:21:31') }
-                    ,{ date: new Date('2020/08/24 13:24:57') },
-                    { date: new Date('2020/08/25 13:25:12') }/* ... */],
-                }
-            ];
-
-            d3
-                .select('#div_detail')
+            var repositoriesData = [{
+                name: 'Log Lines',
+                data: []
+            }]
+            data.forEach(function(d,i){
+                // var time = new Date(d['timestamp']);
+                // time.setSeconds(time.getSeconds() + 8*i);
+                var time = new Date(d['timestamp']);
+                repositoriesData[0].data.push({
+                    date: time,
+                    embeddings: d['embeddings'],
+                    instance_id: d['instance_id'],
+                    error_flag: d['features'][0]['obj_value']['error_flag'],
+                    template_id: d['features'][0]['obj_value']['template_id'],
+                    positive_score: d['positive_score'],
+                    message: d['message']
+                })
+            })
+            
+            console.log(repositoriesData)
+            d3.select('#div_detail')
                 .data([repositoriesData])
                 .call(chart);
         },
@@ -667,7 +676,7 @@ export default{
             this.LOAD_D = true
             const path = "http://localhost:5000/postLogline"
             const payload = {
-                'log_embeddings': data['log_embeddings'],
+                'window_info': data,
                 'scatterplot': this.SCATTERPLOT,
                 'window_embedding': data['actual_embeddings'],
                 'projection': this.SELECTED_PROJECT,
@@ -678,9 +687,9 @@ export default{
                 console.log(res.data)
                 this.$store.commit('updateLOAD_B', false)
                 this.LOAD_D = false
-                this.drawLogline(res.data['panel_d'])
-                // this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
-                this.drawEventDrop()
+                // this.drawLogline(res.data['panel_d'])
+                this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
+                this.drawEventDrop(res.data['panel_d'])
             })
             .catch((error)=>{
                 console.log(error)
