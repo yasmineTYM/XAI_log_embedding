@@ -712,29 +712,6 @@ export default{
                 }
                 this.$store.commit('pushSCATTERPLOT', temp)
             }
-            // this.$store.commit('updateLOAD_B', true)
-            // this.LOAD_D = true
-            // const path = "http://localhost:5000/postLogline"
-            // const payload = {
-            //     'window_info': data,
-            //     'scatterplot': this.SCATTERPLOT,
-            //     'window_embedding': data['actual_embeddings'],
-            //     'projection': this.SELECTED_PROJECT,
-            //     'app': this.SELECTED_APP
-            // }
-            // axios.post(path, payload)
-            // .then((res)=>{
-            //     console.log(res.data)
-            //     this.$store.commit('updateLOAD_B', false)
-            //     this.LOAD_D = false
-            //     // this.drawLogline(res.data['panel_d'])
-            //     this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
-            //     
-            //     
-            // })
-            // .catch((error)=>{
-            //     console.log(error)
-            // })
         },
         drawEventDrop(){
             const chart = eventDrops({ d3 });
