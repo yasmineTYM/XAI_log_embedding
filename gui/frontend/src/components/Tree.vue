@@ -51,7 +51,8 @@ export default{
            tree_items: null,
            show_tree: false,
            showDetail: true,
-           LOAD_D: false
+           LOAD_D: false,
+           eventdrops:[]
         }
     },
     
@@ -658,14 +659,14 @@ export default{
             result['type'] = 'actual'
             all_number = all_number.concat(data['actual_embeddings'])
             coordinate_data.push(result)
-            console.log(data['actual_embeddings'])
+            // console.log(data['actual_embeddings'])
             var result = {};
             var values = data['alert']['features'][0]['value']['log_anomaly_data']['embedding_expected']
             keys.forEach((key, i) => result[key] = values[i])
             result['type'] = 'expected'
             all_number = all_number.concat(values)
             coordinate_data.push(result)
-            console.log(values)
+            // console.log(values)
             var log_embeddings = data['log_embeddings']
             log_embeddings.forEach(function(d){
                 var result = {};
@@ -681,6 +682,8 @@ export default{
             //prepare data for coordinates
 
             this.drawCoordinate(coordinate_data, keys, min, max)
+            this.eventdrops = data['eventdrops']
+            this.drawEventDrop()
             // this.$store.commit('updateLOAD_B', true)
             // this.LOAD_D = true
             // const path = "http://localhost:5000/postLogline"
@@ -698,20 +701,20 @@ export default{
             //     this.LOAD_D = false
             //     // this.drawLogline(res.data['panel_d'])
             //     this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
-            //     this.drawEventDrop(res.data['panel_d'])
+            //     
+            //     
             // })
             // .catch((error)=>{
             //     console.log(error)
             // })
         },
-        drawEventDrop(data){
-            console.log(data)
+        drawEventDrop(){
             const chart = eventDrops({ d3 });
             var repositoriesData = [{
                 name: 'Log Lines',
                 data: []
             }]
-            data.forEach(function(d,i){
+            this.eventdrops.forEach(function(d,i){
                 // var time = new Date(d['timestamp']);
                 // time.setSeconds(time.getSeconds() + 8*i);
                 var time = new Date(d['timestamp']);

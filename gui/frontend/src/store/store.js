@@ -25,12 +25,13 @@ export const store = new Vuex.Store({
     },
     updateLOAD_B(state, newValue){
         state.LOAD_B = newValue
-    }
+    },
+
   },
   getters: {
     SELECTED_APP: state => state.SELECTED_APP,
     SCATTERPLOT: state => state.SCATTERPLOT,
     SELECTED_PROJECT: state => state.SELECTED_PROJECT,
-    LOAD_B: state => state.LOAD_B
+    LOAD_B: state => state.LOAD_B,
   }
 })

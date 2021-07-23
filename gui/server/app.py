@@ -222,40 +222,30 @@ def postEmbedding():
 @app.route('/getTree', methods=['GET'])
 def getTree():
     data = []
-    with open('../../../../Data/gui/timeline/fault_tree/cpu_hog.json') as f:
+    with open('../../../../Data/gui/timeline/fault_tree_eventdrops/cpu_hog.json') as f:
         for line in f:
             temp = json.loads(line)
             data.append(temp)
-    new_data =[]
-    for index in range(len(data)):
-        temp = data[index]
-        temp['div_id'] = 'div'+ str(index)
-        new_data.append(temp)
-    return jsonify(new_data)
+    return jsonify(data)
 
 @app.route('/postTree', methods=['POST'])
 def postTree():
     data = []
     app = request.get_json()['app']
     if app=='all':
-        with open('../../../../Data/gui/timeline/fault_tree/cpu_hog.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_eventdrops/cpu_hog.json') as f:
             for line in f:
                 temp = json.loads(line)
                 data.append(temp)
     else:
-        with open('../../../../Data/gui/timeline/fault_tree/cpu_hog.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_eventdrops/cpu_hog.json') as f:
             for line in f:
                 temp = json.loads(line)
                 this_app = temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']
                 # print(this_app)
                 if this_app==app:
                     data.append(temp)
-    new_data =[]
-    for index in range(len(data)):
-        temp = data[index]
-        temp['div_id'] = 'div'+ str(index)
-        new_data.append(temp)
-    return jsonify(new_data)
+    return jsonify(data)
 
 @app.route('/postLogline', methods =['POST'])
 def postLogline():

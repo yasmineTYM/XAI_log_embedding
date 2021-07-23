@@ -44,12 +44,19 @@ export default ({
 
         // Follow margins conventions (https://bl.ocks.org/mbostock/3019563)
         const width = selection.node().clientWidth - margin.left - margin.right;
-
+        // const start =['date']
+        // const end = ['date']
+        
+        const start = selection.data()[0][0]['data'][0]['date']
+        const length = selection.data()[0][0]['data'].length
+        const end = selection.data()[0][0]['data'][length-1]['date']
+        console.log(start, end)
         const xScale = d3
             .scaleTime()
-            .domain([rangeStart, rangeEnd])
+            .domain([start, end])
             .range([0, width - labelWidth]);
-
+        // console.log(rangeStart, rangeEnd)
+        // console.log(
         chart._scale = xScale;
         chart.currentBreakpointLabel = getBreakpointLabel(
             breakpoints,
