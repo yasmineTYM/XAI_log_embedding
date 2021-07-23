@@ -9,7 +9,7 @@
                             <el-timeline-item v-for="(activity, index) in tree_items" :timestamp="activity.utc_timestamp" placement="top" :class="activity.abnormal_flag">
                                 <el-card shadow="hover">
                                     <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
-                                    <span class="timeline_detail">title: {{activity.alert.title}}</span>
+                                    <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>
                                     <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
                                     <div :id="activity.div_id"></div>
                                 </el-card>
@@ -20,11 +20,14 @@
             </el-col>
             <el-col :span="19">
                  
-                 <div style="height:620px; width: 1400px;overflow:scroll">
+                 <div style="height:220px; width: 1400px;overflow:scroll">
                    <!-- <el-row  class="scatter_row"></el-row> -->
-                    <div id="div_detail" v-loading="LOAD_D"></div>
+                    <div id="div_event" v-loading="LOAD_D"></div>
                 </div>
-                
+                <div style="height:220px; width: 1400px;">
+                   <!-- <el-row  class="scatter_row"></el-row> -->
+                    <div id="div_embed"></div>
+                </div>
             </el-col>
         </el-row>
 
@@ -60,33 +63,7 @@ export default{
 
     },
     methods: {
-        drawEventDrop(data){
-            console.log(data)
-            const chart = eventDrops({ d3 });
-            var repositoriesData = [{
-                name: 'Log Lines',
-                data: []
-            }]
-            data.forEach(function(d,i){
-                // var time = new Date(d['timestamp']);
-                // time.setSeconds(time.getSeconds() + 8*i);
-                var time = new Date(d['timestamp']);
-                repositoriesData[0].data.push({
-                    date: time,
-                    embeddings: d['embeddings'],
-                    instance_id: d['instance_id'],
-                    error_flag: d['features'][0]['obj_value']['error_flag'],
-                    template_id: d['features'][0]['obj_value']['template_id'],
-                    positive_score: d['positive_score'],
-                    message: d['message']
-                })
-            })
-            
-            console.log(repositoriesData)
-            d3.select('#div_detail')
-                .data([repositoriesData])
-                .call(chart);
-        },
+       
         drawLogline(data){
             // console.log(data)
             // this.postLogline(data)
@@ -671,29 +648,192 @@ export default{
             }
         },
         postLogline(data){
+            // console.log(data)
+            var coordinate_data = []
+            var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
+            var all_number = []
+
+            var result = {};
+            keys.forEach((key, i) => result[key] = data['actual_embeddings'][i])
+            result['type'] = 'actual'
+            all_number = all_number.concat(data['actual_embeddings'])
+            coordinate_data.push(result)
+            console.log(data['actual_embeddings'])
+            var result = {};
+            var values = data['alert']['features'][0]['value']['log_anomaly_data']['embedding_expected']
+            keys.forEach((key, i) => result[key] = values[i])
+            result['type'] = 'expected'
+            all_number = all_number.concat(values)
+            coordinate_data.push(result)
+            console.log(values)
+            var log_embeddings = data['log_embeddings']
+            log_embeddings.forEach(function(d){
+                var result = {};
+                all_number = all_number.concat(d)
+                keys.forEach((key, i) => result[key] = d[i])
+                result['type']='logs'
+                coordinate_data.push(result)
+            })
+            // console.log(all_number)
+            var min = d3.min(all_number)
+            var max = d3.max(all_number)
+            // console.log(coordinate_data, min,max);
+            //prepare data for coordinates
+
+            this.drawCoordinate(coordinate_data, keys, min, max)
+            // this.$store.commit('updateLOAD_B', true)
+            // this.LOAD_D = true
+            // const path = "http://localhost:5000/postLogline"
+            // const payload = {
+            //     'window_info': data,
+            //     'scatterplot': this.SCATTERPLOT,
+            //     'window_embedding': data['actual_embeddings'],
+            //     'projection': this.SELECTED_PROJECT,
+            //     'app': this.SELECTED_APP
+            // }
+            // axios.post(path, payload)
+            // .then((res)=>{
+            //     console.log(res.data)
+            //     this.$store.commit('updateLOAD_B', false)
+            //     this.LOAD_D = false
+            //     // this.drawLogline(res.data['panel_d'])
+            //     this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
+            //     this.drawEventDrop(res.data['panel_d'])
+            // })
+            // .catch((error)=>{
+            //     console.log(error)
+            // })
+        },
+        drawEventDrop(data){
             console.log(data)
-            this.$store.commit('updateLOAD_B', true)
-            this.LOAD_D = true
-            const path = "http://localhost:5000/postLogline"
-            const payload = {
-                'window_info': data,
-                'scatterplot': this.SCATTERPLOT,
-                'window_embedding': data['actual_embeddings'],
-                'projection': this.SELECTED_PROJECT,
-                'app': this.SELECTED_APP
+            const chart = eventDrops({ d3 });
+            var repositoriesData = [{
+                name: 'Log Lines',
+                data: []
+            }]
+            data.forEach(function(d,i){
+                // var time = new Date(d['timestamp']);
+                // time.setSeconds(time.getSeconds() + 8*i);
+                var time = new Date(d['timestamp']);
+                repositoriesData[0].data.push({
+                    date: time,
+                    embeddings: d['embeddings'],
+                    instance_id: d['instance_id'],
+                    error_flag: d['features'][0]['obj_value']['error_flag'],
+                    template_id: d['features'][0]['obj_value']['template_id'],
+                    positive_score: d['positive_score'],
+                    message: d['message']
+                })
+            })
+            
+            console.log(repositoriesData)
+            d3.select('#div_event')
+                .data([repositoriesData])
+                .call(chart);
+        },
+        drawCoordinate(data,dimensions,min,max){
+            d3.select('#div_embed').html('')
+            // set the dimensions and margins of the graph
+            var margin = {top: 30, right: 50, bottom: 10, left: 50},
+            width = 1400 - margin.left - margin.right,
+            height = 220 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#div_embed")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+            // Color scale: give me a specie name, I return a color
+            var color = d3.scaleOrdinal()
+                .domain(["actual", "expected", "logs" ])
+                .range([ "red", "blue", "yellow"])
+
+            // Here I set the list of dimension manually to control the order of axis:
+            // dimensions = ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
+
+            // For each dimension, I build a linear scale. I store all in a y object
+            
+            var y = {}
+            for (let i in dimensions) {
+                name = dimensions[i]
+                y[name] = d3.scaleLinear()
+                .domain( [min,max] ) // --> Same axis range for each group
+                // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+                .range([height, 0])
             }
-            axios.post(path, payload)
-            .then((res)=>{
-                console.log(res.data)
-                this.$store.commit('updateLOAD_B', false)
-                this.LOAD_D = false
-                // this.drawLogline(res.data['panel_d'])
-                this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
-                this.drawEventDrop(res.data['panel_d'])
-            })
-            .catch((error)=>{
-                console.log(error)
-            })
+
+            // Build the X scale -> it find the best position for each Y axis
+            var x = d3.scalePoint()
+                .range([0, width])
+                .domain(dimensions);
+            // Highlight the specie that is hovered
+            var highlight = function(d){
+                var selected_specie = d.type
+                // first every group turns grey
+                d3.selectAll(".line")
+                // .transition().duration(200)
+                .style("stroke", "lightgrey")
+                .style("opacity", "0.2")
+                // Second the hovered specie takes its color
+                d3.selectAll("." + selected_specie)
+                // .transition().duration(200)
+                .style("stroke", color(selected_specie))
+                .style("opacity", "1")
+            }
+                        // Unhighlight
+            var doNotHighlight = function(d){
+                d3.selectAll(".line")
+                // .transition().duration(200).delay(1000)
+                .style("stroke", function(d){ return( color(d.type))} )
+                .style("opacity", "1")
+            }
+
+            // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+            function path(d) {
+                return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+            }
+
+            // Draw the lines
+            svg.selectAll("myPath")
+                .data(data)
+                .enter()
+                .append("path")
+                .attr("class", function (d) { return "line " + d.type } ) // 2 class for each line: 'line' and the group name
+                .attr("d",  path)
+                .style("fill", "none" )
+                .style("stroke", function(d){ return( color(d.type))})
+                .style('stroke-width',function(d){
+                    if(d.type == 'actual' || d.type=='expected'){
+                        return 4
+                    } else{
+                        return 2
+                    }
+                })
+                .style("opacity", 0.5)
+                .on("mouseover", highlight)
+                .on("mouseleave", doNotHighlight )
+
+            // Draw the axis:
+            svg.selectAll("myAxis")
+                // For each dimension of the dataset I add a 'g' element:
+                .data(dimensions).enter()
+                .append("g")
+                .attr("class", "axis")
+                // I translate this element to its right position on the x axis
+                .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+                // And I build the axis with the call function
+                .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d])); })
+                // Add axis title
+                .append("text")
+                .style("text-anchor", "middle")
+                .attr("y", -9)
+                .text(function(d) { return d; })
+                .style("fill", "black")
+
         }
 
     },
