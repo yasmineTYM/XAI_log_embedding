@@ -650,6 +650,8 @@ export default{
         },
         postLogline(data){
             // console.log(data)
+            this.$store.commit('sliceSCATTERPLOT')
+            console.log(this.SCATTERPLOT.length)
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
             var all_number = []
@@ -684,6 +686,32 @@ export default{
             this.drawCoordinate(coordinate_data, keys, min, max)
             this.eventdrops = data['eventdrops']
             this.drawEventDrop()
+            // console.log(data)
+            if(this.SELECTED_PROJECT=='tsne'){
+                var temp={
+                    'anomaly_label':1,
+                    'app': this.SELECTED_APP,
+                    'embedding_ids':'',
+                    'error_flag':'',
+                    'highlight':1,
+                    'template_ids':'',
+                    'x': data['tsne_x'],
+                    'y': data['tsne_y']
+                }
+                this.$store.commit('pushSCATTERPLOT', temp)
+            }else if(this.SELECTED_PROJECT=='umap'){
+                var temp={
+                    'anomaly_label':1,
+                    'app': this.SELECTED_APP,
+                    'embedding_ids':'',
+                    'error_flag':'',
+                    'highlight':1,
+                    'template_ids':'',
+                    'x': data['umap_x'],
+                    'y': data['umap_y']
+                }
+                this.$store.commit('pushSCATTERPLOT', temp)
+            }
             // this.$store.commit('updateLOAD_B', true)
             // this.LOAD_D = true
             // const path = "http://localhost:5000/postLogline"

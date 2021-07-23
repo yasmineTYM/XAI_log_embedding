@@ -20,6 +20,12 @@ export const store = new Vuex.Store({
     updateSCATTERPLOT(state, newValue){
         state.SCATTERPLOT = newValue
     },
+    pushSCATTERPLOT(state,newValue){
+      state.SCATTERPLOT.push(newValue)
+    },
+    sliceSCATTERPLOT(state){
+      state.SCATTERPLOT.pop()
+    },
     updateSELECTED_PROJECT(state, newValue){
         state.SELECTED_PROJECT = newValue
     },
