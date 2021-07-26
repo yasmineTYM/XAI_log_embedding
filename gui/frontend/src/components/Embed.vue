@@ -474,13 +474,13 @@ circle {
     fill: #346751;
     /* stroke:hsl(0, 3%, 73%);
     stroke-width:1; */
-    fill-opacity: 0.5;
+    /* fill-opacity: 0.5; */
 }
 .abnormal {
     fill: #c84b31;
     stroke:hsl(0, 3%, 73%);
     stroke-width:1;
-    fill-opacity: 0.5;
+    /* fill-opacity: 0.5; */
 }
 .lasso path {
     stroke: rgb(80,80,80);
