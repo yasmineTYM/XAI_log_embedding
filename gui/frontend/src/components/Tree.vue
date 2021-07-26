@@ -331,23 +331,7 @@ export default{
         },  
         drawTimeline(){
             d3.select('#div_timeline').html('')
-            // var testData = [
-            //     {label: "person a", times: [
-            //         {"starting_time": 1355752800000, "ending_time": 1355759900000},
-            //         {"starting_time": 1355767900000, "ending_time": 1355774400000}]},
-            //     {label: "person b", times: [
-            //         {"starting_time": 1355759910000, "ending_time": 1355761900000}]},
-            //     {label: "person c", times: [
-            //         {"starting_time": 1355761910000, "ending_time": 1355763910000}]}
-            // ];
-            // var chart = d3Timeline.timelines()
-            // // .axisZoom()
-            // .orient('top');
-
-            // var svg = d3.select("#div_timeline").append("svg").attr("width", 364)
-            // .datum(testData).call(chart);
-
-                        // set the dimensions and margins of the graph
+            // set the dimensions and margins of the graph
             var margin = {top: 10, right: 30, bottom: 30, left: 60},
                 width = 360 - margin.left - margin.right,
                 height = 150 - margin.top - margin.bottom;
