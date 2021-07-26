@@ -527,15 +527,15 @@ export default{
             })
         },
         fiterTree(start, end, that){
-            console.log(start,end)
-            console.log(that.tree_items)
+            // console.log(start,end)
+            // console.log(that.tree_items)
             that.show_tree = false
             var new_item = []
             var parse = d3.timeParse("%s");
             that.tree_items.forEach(function(d){
                 if(parse(d['timestamp'])<end && parse(d['timestamp'])>=start){
                     new_item.push(d)
-                     console.log('yes')
+                    //  console.log('yes')
                 }{
                    
                 }
@@ -583,7 +583,12 @@ export default{
             data['eventdrops'].sort(function(a,b) {return (a.date > b.date) ? 1 : ((b.date > a.date) ? -1 : 0);} );
 
             this.eventdrops = data['eventdrops']
-            this.drawCoordinate(coordinate_data, keys, min, max)
+
+            let copy_eventdrops = []
+            data['eventdrops'].forEach(function(d){
+                copy_eventdrops.push(d)
+            })
+            this.drawCoordinate(copy_eventdrops,coordinate_data, keys, min, max)
             
             this.drawEventDrop(null)
             // console.log(data)
@@ -643,8 +648,9 @@ export default{
                 .data([repositoriesData])
                 .call(chart);
         },
-        drawCoordinate(data,dimensions,min,max){
-            // console.log(this.eventdrops)
+        drawCoordinate(raw,data,dimensions,min,max){
+            // console.log(raw)
+            
             // this.eventdrops.pu
             d3.select('#div_embed').html('')
             // set the dimensions and margins of the graph
@@ -664,7 +670,7 @@ export default{
             // Color scale: give me a specie name, I return a color
             var color = d3.scaleOrdinal()
                 .domain(["actual", "expected", "logs" ])
-                .range([ "red", "green", "yellow"])
+                .range([ "red", "green", "#F6D186"])
 
             // Here I set the list of dimension manually to control the order of axis:
             // dimensions = ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
@@ -687,7 +693,8 @@ export default{
             // Highlight the specie that is hovered
             var that = this
             var highlight = function(d,i){
-                // console.log(d,i)
+                // console.log(raw['log_embeddings'][i])
+                
                 var selected_specie = d.type
                 // first every group turns grey
                 d3.selectAll(".line")
@@ -708,7 +715,7 @@ export default{
                 paths.style("stroke", function(d){ return( color(d.type))})
                 .style('stroke-width',function(d){
                     if(d.type == 'actual' || d.type=='expected'){
-                        return 4
+                        return 2
                     } else{
                         return 2
                     }
@@ -743,7 +750,14 @@ export default{
                 })
                 .style("opacity", 0.5)
                 .on("mouseover", highlight)
-                .on("mouseleave", doNotHighlight )
+                .on("mouseleave", doNotHighlight)
+            // paths.append('title')
+            // .text(function(d,i){
+            //     console.log(raw[i],d,i)
+            //     // return raw[i]['message']
+            //     // console.log(raw['eventdrops'])
+            //     // return raw[i]['message']
+            // })
 
             // Draw the axis:
             svg.selectAll("myAxis")
@@ -782,7 +796,7 @@ export default{
             })
             // console.log(draw_data)
             draw_data = draw_data.slice(0, 40)
-            console.log(data)
+            // console.log(data)
             // set the dimensions and margins of the graph
             var margin = {top: 30, right: 30, bottom: 70, left: 120},
                 width = 1400 - margin.left - margin.right,
@@ -861,7 +875,7 @@ export default{
             .attr("transform", "translate(-10,0)rotate(-45)")
             .style("text-anchor", "end");
 
-            console.log(this.embed_template)
+            // console.log(this.embed_template)
         },
         getTemplate(){
             const path = "http://localhost:5000/getTemplate"
@@ -869,7 +883,7 @@ export default{
             axios.get(path)
             .then((res)=>{
                 // console.log(JSON.parse(res.data))
-                console.log(res.data)
+                // console.log(res.data)
                 this.embed_template = res.data
                 // this.drawTimeline()
                 // this.tree_items = res.data
@@ -957,9 +971,7 @@ export default{
 .el-timeline-item__tail{
     border-left: 2px solid #D6D2C4
 }
-.normal .el-timeline-item__node{
-    background-color: #9DAB86
-}
+
 .abnormal .el-timeline-item__node{
     background-color: #CC7351
 }
