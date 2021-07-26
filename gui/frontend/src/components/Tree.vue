@@ -28,6 +28,10 @@
                    <!-- <el-row  class="scatter_row"></el-row> -->
                     <div id="div_embed"></div>
                 </div>
+                <div style="height:320px; width: 1400px;">
+                   <!-- <el-row  class="scatter_row"></el-row> -->
+                    <div id="div_lime"></div>
+                </div>
             </el-col>
         </el-row>
 
@@ -41,6 +45,7 @@ import axios from 'axios'
 import cloud from "d3-cloud"
 import * as d3Timeline from 'd3-timelines'
 import eventDrops from './src';
+// import EMBED_TEMPLATE from '../../static/log_embedding_template.json'
 // import '../src/style.css';
 // import { gravatar, humanizeDate } from './utils';
 // import * as eventDrops from 'event-drops';
@@ -52,7 +57,8 @@ export default{
            show_tree: false,
            showDetail: true,
            LOAD_D: false,
-           eventdrops:[]
+           eventdrops:[],
+           embed_template:[]
         }
     },
     
@@ -718,10 +724,10 @@ export default{
                 this.$store.commit('pushSCATTERPLOT', temp)
             }
 
-            this.getLIME()
+            this.getLIME(data['lime'])
         },
         drawEventDrop(id){
-            console.log('func')
+            // console.log('func')
             d3.select('#div_event').html('')
             const chart = eventDrops({ d3 });
             var repositoriesData = [{
@@ -868,23 +874,123 @@ export default{
                 .style("fill", "black")
 
         },
-        getLIME(){
-            // const path = "http://localhost:5000/getTree"
+        getLIME(data){
+            d3.select('#div_lime').html('')
+            var data = data.replace('[(','').replace(')]','').split('), (')
             
-            // axios.get(path)
-            // .then((res)=>{
-            //     // console.log(JSON.parse(res.data))
-            //     console.log(res.data)
-            //     this.drawTimeline()
-            //     this.tree_items = res.data
-            //     this.show_tree = true
-                
-            // })
-            // .catch((error)=>{
-            //     console.log(error)
-            // })
-        }
 
+            var draw_data =[]
+            data.forEach(function(d){
+                let value = parseFloat(d.split(',')[1])
+                let key = d.split(',')[0].replace("'",'')
+                let id = key.split(' ')[0]
+                draw_data.push({
+                    'key': key,
+                    'value': value,
+                    'id': parseInt(id)
+                })
+
+            })
+            // console.log(draw_data)
+            draw_data = draw_data.slice(0, 40)
+            console.log(data)
+            // set the dimensions and margins of the graph
+            var margin = {top: 30, right: 30, bottom: 70, left: 120},
+                width = 1400 - margin.left - margin.right,
+                height = 320 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#div_lime")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+                        // X axis
+            var x = d3.scaleBand()
+            .range([ 0, width ])
+            .domain(draw_data.map(function(d) { return d.key; }))
+            .padding(0.4);
+            
+
+            // Add Y axis
+            var yp = d3.scaleLinear()
+            .domain([0,0.5])
+            .range([ height/2,0]);
+
+            var yn = d3.scaleLinear()
+            .domain([-0.5,0])
+            .range([height/2, 0]);
+
+            svg.append("g")
+            .call(d3.axisLeft(d3.scaleLinear()
+            .domain([-0.5,0.5])
+            .range([height,0])));
+
+            //  svg.append("g")
+            // .call(d3.axisLeft(yn));
+
+            // Bars
+            var bars = svg.selectAll("mybar")
+            .data(draw_data)
+            .enter()
+            .append("rect")
+            .attr("x", function(d) { return x(d.key); })
+            .attr("y", function(d) { 
+                if(d.value>0){
+                    return yp(d.value)
+                }else{
+                    return height/2
+                }
+                return 0; })
+            .attr("width", x.bandwidth())
+            .attr("height", function(d) { 
+                if(d.value>0){
+                    return height/2-yp(d.value)
+                }else{
+                    return yn(d.value)
+                }
+             })
+            .attr("fill", function(d){
+                if(d.value>0){
+                    return '#ED6663'
+                }else{
+                    return '#4E89AE'
+                }
+            })
+            var that = this
+            bars.append('title')
+            .text(function(d){
+                return that.embed_template[d.id]['message']
+            })
+
+            svg.append("g")
+            .attr("transform", "translate(0," + height/2 + ")")
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .attr("transform", "translate(-10,0)rotate(-45)")
+            .style("text-anchor", "end");
+
+            console.log(this.embed_template)
+        },
+        getTemplate(){
+            const path = "http://localhost:5000/getTemplate"
+            
+            axios.get(path)
+            .then((res)=>{
+                // console.log(JSON.parse(res.data))
+                console.log(res.data)
+                this.embed_template = res.data
+                // this.drawTimeline()
+                // this.tree_items = res.data
+                // this.show_tree = true
+                
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
+        }
     },
     watch:{
         show_tree(){
@@ -909,7 +1015,8 @@ export default{
 
     },
     mounted(){
-         let recaptchaScript = document.createElement('script')
+        this.getTemplate();
+        let recaptchaScript = document.createElement('script')
         recaptchaScript.setAttribute('src', 'https://unpkg.com/d3')
         let js2 = document.createElement('script')
         js2.setAttribute('src','https://unpkg.com/event-drops')
@@ -918,6 +1025,9 @@ export default{
 
         document.head.appendChild(recaptchaScript)
         document.head.appendChild(js2)
+
+
+
     },
     computed:{
         SELECTED_APP(){
