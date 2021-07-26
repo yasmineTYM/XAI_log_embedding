@@ -47,10 +47,13 @@ export default ({
         // const start =['date']
         // const end = ['date']
         
-        const start = selection.data()[0][0]['data'][0]['date']
+        const start = new Date(selection.data()[0][0]['data'][0]['date'])
         const length = selection.data()[0][0]['data'].length
-        const end = selection.data()[0][0]['data'][length-1]['date']
-        console.log(start, end)
+        const end = new Date(selection.data()[0][0]['data'][length-1]['date'])
+
+        start.setSeconds(start.getSeconds()-10);
+        end.setSeconds(end.getSeconds()+10);
+        // console.log(start, end)
         const xScale = d3
             .scaleTime()
             .domain([start, end])

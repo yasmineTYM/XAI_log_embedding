@@ -35,8 +35,8 @@ export default (config, xScale,tym,d) => selection => {
     })
     // console.log(tym[0][0])
     // console.log(tym[0][0]['data'])
-    
-
+    // console.log(tym)
+    var id = tym[0][0]['id']
     const drops = selection
         // .data(temp)
         .selectAll('.drop')
@@ -48,8 +48,10 @@ export default (config, xScale,tym,d) => selection => {
     var circles = drops.enter()
         .append('circle')
         .classed('drop', true)
-        .on('click', function(d){
-            console.log(d)
+        .on('click', function(d,i){
+            // console.log(d,i)
+            // console.log(d)
+            this.$store.commit('updateLOG_ID', i)
         })
         .on('mouseover', function(d){
             d3.select(this).attr('r',dropHoverR)
@@ -58,7 +60,16 @@ export default (config, xScale,tym,d) => selection => {
             circles.attr('r', dropRadius)
         })
         .merge(drops)
-        .attr('r', dropRadius)
+        .attr('r', function(d,i){
+            // console.log(id)
+            if(i==id && id!=null){
+                console.log('yes')
+                return 8
+            }else{
+                
+                return 5
+            }
+        })
         .attr('fill', function(d){
             if(d['error_flag']=='true'){
                 return '#C05555'

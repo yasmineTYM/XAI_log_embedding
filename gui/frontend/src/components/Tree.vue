@@ -20,7 +20,7 @@
             </el-col>
             <el-col :span="19">
                  
-                 <div style="height:220px; width: 1400px;overflow:scroll">
+                 <div style="height:120px; width: 1400px;overflow:scroll">
                    <!-- <el-row  class="scatter_row"></el-row> -->
                     <div id="div_event" v-loading="LOAD_D"></div>
                 </div>
@@ -40,7 +40,7 @@ import * as d3 from 'd3'
 import axios from 'axios'
 import cloud from "d3-cloud"
 import * as d3Timeline from 'd3-timelines'
-import eventDrops from '../src';
+import eventDrops from './src';
 // import '../src/style.css';
 // import { gravatar, humanizeDate } from './utils';
 // import * as eventDrops from 'event-drops';
@@ -649,12 +649,21 @@ export default{
             }
         },
         postLogline(data){
-            // console.log(data)
+            console.log(data)
             this.$store.commit('sliceSCATTERPLOT')
             console.log(this.SCATTERPLOT.length)
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
             var all_number = []
+            
+            var log_embeddings = data['log_embeddings']
+            log_embeddings.forEach(function(d){
+                var result = {};
+                all_number = all_number.concat(d)
+                keys.forEach((key, i) => result[key] = d[i])
+                result['type']='logs'
+                coordinate_data.push(result)
+            })
 
             var result = {};
             keys.forEach((key, i) => result[key] = data['actual_embeddings'][i])
@@ -669,23 +678,19 @@ export default{
             all_number = all_number.concat(values)
             coordinate_data.push(result)
             // console.log(values)
-            var log_embeddings = data['log_embeddings']
-            log_embeddings.forEach(function(d){
-                var result = {};
-                all_number = all_number.concat(d)
-                keys.forEach((key, i) => result[key] = d[i])
-                result['type']='logs'
-                coordinate_data.push(result)
-            })
+            
             // console.log(all_number)
             var min = d3.min(all_number)
             var max = d3.max(all_number)
             // console.log(coordinate_data, min,max);
             //prepare data for coordinates
 
-            this.drawCoordinate(coordinate_data, keys, min, max)
+            data['eventdrops'].sort(function(a,b) {return (a.date > b.date) ? 1 : ((b.date > a.date) ? -1 : 0);} );
+
             this.eventdrops = data['eventdrops']
-            this.drawEventDrop()
+            this.drawCoordinate(coordinate_data, keys, min, max)
+            
+            this.drawEventDrop(null)
             // console.log(data)
             if(this.SELECTED_PROJECT=='tsne'){
                 var temp={
@@ -712,11 +717,16 @@ export default{
                 }
                 this.$store.commit('pushSCATTERPLOT', temp)
             }
+
+            this.getLIME()
         },
-        drawEventDrop(){
+        drawEventDrop(id){
+            console.log('func')
+            d3.select('#div_event').html('')
             const chart = eventDrops({ d3 });
             var repositoriesData = [{
                 name: 'Log Lines',
+                id: id,
                 data: []
             }]
             this.eventdrops.forEach(function(d,i){
@@ -733,16 +743,17 @@ export default{
                     message: d['message']
                 })
             })
-            
-            console.log(repositoriesData)
+            // console.log(repositoriesData)
             d3.select('#div_event')
                 .data([repositoriesData])
                 .call(chart);
         },
         drawCoordinate(data,dimensions,min,max){
+            // console.log(this.eventdrops)
+            // this.eventdrops.pu
             d3.select('#div_embed').html('')
             // set the dimensions and margins of the graph
-            var margin = {top: 30, right: 50, bottom: 10, left: 50},
+            var margin = {top: 30, right: 10, bottom: 10, left: 120},
             width = 1400 - margin.left - margin.right,
             height = 220 - margin.top - margin.bottom;
 
@@ -758,7 +769,7 @@ export default{
             // Color scale: give me a specie name, I return a color
             var color = d3.scaleOrdinal()
                 .domain(["actual", "expected", "logs" ])
-                .range([ "red", "blue", "yellow"])
+                .range([ "red", "green", "yellow"])
 
             // Here I set the list of dimension manually to control the order of axis:
             // dimensions = ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
@@ -779,25 +790,39 @@ export default{
                 .range([0, width])
                 .domain(dimensions);
             // Highlight the specie that is hovered
-            var highlight = function(d){
+            var that = this
+            var highlight = function(d,i){
+                // console.log(d,i)
                 var selected_specie = d.type
                 // first every group turns grey
                 d3.selectAll(".line")
                 // .transition().duration(200)
                 .style("stroke", "lightgrey")
                 .style("opacity", "0.2")
+
+                d3.select(this).style('stroke','red')
+                that.drawEventDrop(i)
                 // Second the hovered specie takes its color
-                d3.selectAll("." + selected_specie)
-                // .transition().duration(200)
-                .style("stroke", color(selected_specie))
-                .style("opacity", "1")
+                // d3.selectAll("." + selected_specie)
+                // // .transition().duration(200)
+                // .style("stroke", color(selected_specie))
+                // .style("opacity", "1")
             }
                         // Unhighlight
             var doNotHighlight = function(d){
-                d3.selectAll(".line")
-                // .transition().duration(200).delay(1000)
-                .style("stroke", function(d){ return( color(d.type))} )
-                .style("opacity", "1")
+                paths.style("stroke", function(d){ return( color(d.type))})
+                .style('stroke-width',function(d){
+                    if(d.type == 'actual' || d.type=='expected'){
+                        return 4
+                    } else{
+                        return 2
+                    }
+                })
+                .style("opacity", 0.5)
+                // d3.selectAll(".line")
+                // // .transition().duration(200).delay(1000)
+                // .style("stroke", function(d){ return( color(d.type))} )
+                // .style("opacity", "1")
             }
 
             // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
@@ -806,7 +831,7 @@ export default{
             }
 
             // Draw the lines
-            svg.selectAll("myPath")
+            var paths = svg.selectAll("myPath")
                 .data(data)
                 .enter()
                 .append("path")
@@ -816,7 +841,7 @@ export default{
                 .style("stroke", function(d){ return( color(d.type))})
                 .style('stroke-width',function(d){
                     if(d.type == 'actual' || d.type=='expected'){
-                        return 4
+                        return 2
                     } else{
                         return 2
                     }
@@ -842,6 +867,22 @@ export default{
                 .text(function(d) { return d; })
                 .style("fill", "black")
 
+        },
+        getLIME(){
+            // const path = "http://localhost:5000/getTree"
+            
+            // axios.get(path)
+            // .then((res)=>{
+            //     // console.log(JSON.parse(res.data))
+            //     console.log(res.data)
+            //     this.drawTimeline()
+            //     this.tree_items = res.data
+            //     this.show_tree = true
+                
+            // })
+            // .catch((error)=>{
+            //     console.log(error)
+            // })
         }
 
     },
@@ -860,7 +901,10 @@ export default{
             this.postTreeData()
         },
         SCATTERPLOT(){
-            console.log(this.SCATTERPLOT)
+            // console.log(this.SCATTERPLOT)
+        },
+        LOG_ID(){
+            console.log(this.LOG_ID)
         }
 
     },
@@ -884,6 +928,9 @@ export default{
         },
         SELECTED_PROJECT(){
             return this.$store.getters.SELECTED_PROJECT
+        },
+        LOG_ID(){
+            return this.$store.getters.LOG_ID
         }
     }
 }

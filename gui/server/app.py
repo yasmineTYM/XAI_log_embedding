@@ -222,7 +222,7 @@ def postEmbedding():
 @app.route('/getTree', methods=['GET'])
 def getTree():
     data = []
-    with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops/cpu_hog.json') as f:
+    with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
         for line in f:
             temp = json.loads(line)
             data.append(temp)
@@ -233,12 +233,12 @@ def postTree():
     data = []
     app = request.get_json()['app']
     if app=='all':
-        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops/cpu_hog.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
             for line in f:
                 temp = json.loads(line)
                 data.append(temp)
     else:
-        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops/cpu_hog.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
             for line in f:
                 temp = json.loads(line)
                 this_app = temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']
