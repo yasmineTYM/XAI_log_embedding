@@ -222,7 +222,7 @@ def postEmbedding():
 @app.route('/getTree', methods=['GET'])
 def getTree():
     data = []
-    with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/network_latency.json') as f:
+    with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
         for line in f:
             temp = json.loads(line)
             data.append(temp)
@@ -233,12 +233,12 @@ def postTree():
     data = []
     app = request.get_json()['app']
     if app=='all':
-        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/network_latency.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
             for line in f:
                 temp = json.loads(line)
                 data.append(temp)
     else:
-        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/network_latency.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
             for line in f:
                 temp = json.loads(line)
                 this_app = temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']
@@ -256,7 +256,7 @@ def postLogline():
     start = one_window['alert']['features'][0]['value']['start_timestamp']
     end = one_window['alert']['features'][0]['value']['end_timestamp']
     app = one_window['alert']['source']['source_application']['name']
-    reference = readjson('../../../../Data/XAI/carts/embeddings/log_level/network_latency.txt')
+    reference = readjson('../../../../Data/XAI/carts/embeddings/log_level/cpu_hog.txt')
     # print(reference.columns)
     # print(start, end, app)
     filtered = reference.loc[(reference['instance_id']==app) & (reference['timestamp']>=start) & (reference['timestamp']<end)]

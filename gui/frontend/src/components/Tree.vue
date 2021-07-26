@@ -336,7 +336,7 @@ export default{
             // set the dimensions and margins of the graph
             var margin = {top: 10, right: 30, bottom: 30, left: 60},
                 width = 360 - margin.left - margin.right,
-                height = 150 - margin.top - margin.bottom;
+                height = 100 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
             var svg = d3.select("#div_timeline")
@@ -351,7 +351,7 @@ export default{
             // Add X axis --> it is a date format
             var x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
-            .range([ 0, width ]);
+            .range([ 5, width-5 ]);
             var xAxis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
@@ -391,7 +391,17 @@ export default{
                 .x(function(d) { return x(d.date) })
                 .y(function(d) { return y(d.value) })
                 )
-             // Add the brushing
+            var nodes = line.append('g')
+            .selectAll('.rr')
+            .data(data)
+            .enter()
+            .append('g')
+            .append('circle')
+            .attr('class','rr')
+            .attr('cx', d=>x(d.date))
+            .attr('cy', d=>y(0))
+            .attr('r',3)
+    // Add the brushing
             line
             .append("g")
                 .attr("class", "brush")
@@ -400,19 +410,24 @@ export default{
             // A function that set idleTimeOut to null
             var idleTimeout
             function idled() { idleTimeout = null; }
-            
+            var that = this
             // A function that update the chart for given boundaries
             function updateChart() {
-
+                
                 // What are the selected boundaries?
                 var extent = d3.event.selection
-
+                
+                // that.fiterTree(x.invert(extent[0]), x.invert(extent[1]), that)
                 // If no selection, back to initial coordinate. Otherwise, update X axis domain
                 if(!extent){
+                    console.log('yes')
                     if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
                     x.domain([ 4,8])
                 }else{
-                    x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
+                    let a = x.invert(extent[0])
+                    let b = x.invert(extent[1])
+                    that.fiterTree(a,b,that)
+                    x.domain([ a,b ])
                     line.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
                 }
 
@@ -426,6 +441,17 @@ export default{
                         .x(function(d) { return x(d.date) })
                         .y(function(d) { return y(d.value) })
                     )
+                line.selectAll('.rr').remove()
+                line.append('g')
+                .selectAll('.rr')
+                .data(data)
+                .enter()
+                .append('g')
+                .append('circle')
+                .attr('class','rr')
+                .attr('cx', d=>x(d.date))
+                .attr('cy', d=>y(0))
+                .attr('r',3)
             }
 
              // If user double click, reinitialize the chart
@@ -439,6 +465,7 @@ export default{
                     .x(function(d) { return x(d.date) })
                     .y(function(d) { return y(d.value) })
                 )
+                that.postTreeData()
             });
 
 
@@ -498,6 +525,23 @@ export default{
             .catch((error)=>{
                 console.log(error)
             })
+        },
+        fiterTree(start, end, that){
+            console.log(start,end)
+            console.log(that.tree_items)
+            that.show_tree = false
+            var new_item = []
+            var parse = d3.timeParse("%s");
+            that.tree_items.forEach(function(d){
+                if(parse(d['timestamp'])<end && parse(d['timestamp'])>=start){
+                    new_item.push(d)
+                     console.log('yes')
+                }{
+                   
+                }
+            })
+            that.tree_items= new_item
+            that.show_tree = true
         },
         drawTree(treeData){
             var that = this
