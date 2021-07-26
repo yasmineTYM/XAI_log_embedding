@@ -58,7 +58,8 @@ export default{
            showDetail: true,
            LOAD_D: false,
            eventdrops:[],
-           embed_template:[]
+           embed_template:[],
+           timeline:[]
         }
     },
     
@@ -331,6 +332,7 @@ export default{
         },  
         drawTimeline(){
             d3.select('#div_timeline').html('')
+            var data = this.timeline
             // set the dimensions and margins of the graph
             var margin = {top: 10, right: 30, bottom: 30, left: 60},
                 width = 360 - margin.left - margin.right,
@@ -345,19 +347,7 @@ export default{
                 .attr("transform",
                     "translate(" + margin.left + "," + margin.top + ")");
             
-            var data = [{
-                'date':d3.timeParse("%Y-%m-%d")('2013-04-28'),
-                'value': 135.98
-            },{
-                'date':d3.timeParse("%Y-%m-%d")('2013-04-29'),
-                'value':147.49
-            },{
-                'date': d3.timeParse("%Y-%m-%d")('2013-04-30'),
-                'value':146.93
-            },{
-                'date':d3.timeParse("%Y-%m-%d")('2013-05-01'),
-                'value':139.89
-            }]
+            
             // Add X axis --> it is a date format
             var x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
@@ -460,7 +450,18 @@ export default{
             .then((res)=>{
                 // console.log(JSON.parse(res.data))
                 // console.log(res.data)
+                var that = this
+                that.timeline=[]
+                var parse = d3.timeParse("%s");
+
+                res.data.forEach(function(d){
+                    that.timeline.push({
+                        'date': parse(d['timestamp']),
+                        'value':1
+                    })
+                })
                 this.drawTimeline()
+
                 this.tree_items = res.data
                 this.show_tree = true
                 
@@ -478,8 +479,17 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                console.log(res.data)
-                
+                // console.log(res.data)
+                var that = this
+                that.timeline=[]
+                var parse = d3.timeParse("%s");
+
+                res.data.forEach(function(d){
+                    that.timeline.push({
+                        'date': parse(d['timestamp']),
+                        'value':1
+                    })
+                })
                 this.drawTimeline()
                 this.tree_items = res.data
                 this.show_tree = true
