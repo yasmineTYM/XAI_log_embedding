@@ -250,16 +250,16 @@ def postTree():
 @app.route('/postLogline', methods =['POST'])
 def postLogline():
     ## ================================ data for panel D: related log embeddings info ================================
-    one_window = request.get_json()['window_info']
-    output = []
+    # one_window = request.get_json()['window_info']
+    # output = []
 
-    start = one_window['alert']['features'][0]['value']['start_timestamp']
-    end = one_window['alert']['features'][0]['value']['end_timestamp']
-    app = one_window['alert']['source']['source_application']['name']
-    reference = readjson('../../../../Data/XAI/carts/embeddings/log_level/cpu_hog.txt')
+    # start = one_window['alert']['features'][0]['value']['start_timestamp']
+    # end = one_window['alert']['features'][0]['value']['end_timestamp']
+    # app = one_window['alert']['source']['source_application']['name']
+    # reference = readjson('../../../../Data/XAI/carts/embeddings/log_level/cpu_hog.txt')
     # print(reference.columns)
     # print(start, end, app)
-    filtered = reference.loc[(reference['instance_id']==app) & (reference['timestamp']>=start) & (reference['timestamp']<end)]
+    # filtered = reference.loc[(reference['instance_id']==app) & (reference['timestamp']>=start) & (reference['timestamp']<end)]
     # print(len(filtered))
         # print(i)
         # f = reference.loc[reference['embedding_string']==str(i)]
@@ -276,72 +276,71 @@ def postLogline():
     scatterplot = request.get_json()['scatterplot']
     scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
     
-    
-    embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
+
+    # embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
     new_embedding = request.get_json()['window_embedding']
-    # embedding_=[]
-    # for ele in scatterplot_pd['embeddings'].tolist():
-    #     embedding_.append(ast.literal_eval(ele))
-    # print(new_embedding)
+    embedding_=[]
+    for ele in scatterplot_pd['embeddings'].tolist():
+        embedding_.append(ast.literal_eval(ele))
     list(embedding_).append(new_embedding)
 
-    # print(np.array(embedding_).shape)
     projection = request.get_json()['projection']
-    # print(projection)
     if projection=='tsne':
-        X_embedded = TSNE(n_components=2,random_state=27).fit_transform(embedding_)
+        X_embedded = TSNE(n_components=2).fit_transform(embedding_)
     else: 
-        X_embedded = umap.UMAP(random_state=27).fit_transform(embedding_)
-    
-    temp1 = list(scatterplot_pd['anomaly_label'].tolist())
-    temp1.append(0)
+        X_embedded = umap.UMAP().fit_transform(embedding_)
 
-    temp2 = list(scatterplot_pd['anomaly_label'].tolist())
-    temp2.append(request.get_json()['app'])
+    temp={
+        'anomaly_label': 1,
+        'app': request.get_json()['app'],
+        'embedding_ids':'',
+        'embeddings': new_embedding,
+        'error_flag': '',
+        'highlight':1,
+        'template_ids':'',
+        'x': X_embedded[-1,0],
+        'y': X_embedded[-1,1]
+    }
+    scatterplot_pd = scatterplot_pd.append(temp, ignore_index = True)
+    # temp1 = list(scatterplot_pd['anomaly_label'].tolist())
+    # temp1.append(0)
 
-    temp3 = list(scatterplot_pd['embedding_ids'].tolist())
-    temp3.append('')
+    # temp2 = list(scatterplot_pd['anomaly_label'].tolist())
+    # temp2.append(request.get_json()['app'])
 
-    temp4 = list(scatterplot_pd['error_flag'].tolist())
-    temp4.append('')
+    # temp3 = list(scatterplot_pd['embedding_ids'].tolist())
+    # temp3.append('')
 
-    temp5 = list(scatterplot_pd['highlight'].tolist())
-    temp5.append(1)
+    # temp4 = list(scatterplot_pd['error_flag'].tolist())
+    # temp4.append('')
 
-    temp6 = list(scatterplot_pd['template_ids'].tolist())
-    temp6.append('')
-    temp7 = list(scatterplot_pd['embeddings'].tolist())
-    temp7.append(new_embedding)
-    temp8 = list(scatterplot_pd['x'].tolist())
-    temp8.append(X_embedded[-1,0])
-    temp9 = list(scatterplot_pd['y'].tolist())
-    temp9.append(X_embedded[-1,1])
+    # temp5 = list(scatterplot_pd['highlight'].tolist())
+    # temp5.append(1)
 
-    # print(X_embedded[-1,0],X_embedded[-1,1])
-    scatterplot_output = pd.DataFrame({
-        'x': temp8,
-        'y': temp9,
-        'anomaly_label': temp1,
-        'app': temp2,
-        'embedding_ids':temp3,
-        'embeddings': temp7,
-        'error_flag': temp4,
-        'highlight':temp5,
-        'template_ids':temp6,
-    })
-    # ================================ data for panel D: reference windowed embedding ================================
-    # distance_list = []
-    # embedding_selected = scatterplot_pd['embeddings'].tolist()
-    # for ele in embedding_selected:
-    #     temp = ast.literal_eval(ele)
-    #     dis = distance.euclidean(new_embedding, temp)
-    #     distance_list.append(dis)
-    # mini_id  = distance_list.index(min(distance_list))
+    # temp6 = list(scatterplot_pd['template_ids'].tolist())
+    # temp6.append('')
+    # temp7 = list(scatterplot_pd['embeddings'].tolist())
+    # temp7.append(new_embedding)
+    # temp8 = list(scatterplot_pd['x'].tolist())
+    # temp8.append(X_embedded[-1,0])
+    # temp9 = list(scatterplot_pd['y'].tolist())
+    # temp9.append(X_embedded[-1,1])
 
-    # ref = scatterplot_pd.iloc[mini_id]
+    # # print(X_embedded[-1,0],X_embedded[-1,1])
+    # scatterplot_output = pd.DataFrame({
+    #     'x': temp8,
+    #     'y': temp9,
+    #     'anomaly_label': temp1,
+    #     'app': temp2,
+    #     'embedding_ids':temp3,
+    #     'embeddings': temp7,
+    #     'error_flag': temp4,
+    #     'highlight':temp5,
+    #     'template_ids':temp6,
+    # })
     return jsonify({
-        'panel_d':filtered.to_dict('records'),
-        'scatterplot':scatterplot_output.to_dict('records'),
+        # 'panel_d':filtered.to_dict('records'),
+        'scatterplot': scatterplot_pd.to_dict('records')
         # 'reference': {
         #     'embedding_ids': ref['embedding_ids'],
         #     'error_flag': ref['error_flag'],

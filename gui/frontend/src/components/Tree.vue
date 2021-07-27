@@ -10,7 +10,7 @@
                             <li class="my_timeline_item" v-for="(activity,index) in tree_items" :key="index">
                                 <!--圈圈节点-->
                                 <span>{{activity.utc_timestamp}}</span>
-                                <div class="my_timeline_node" :style="{'position':index===tree_items.length-1?'relative':'', 'top':index===tree_items.length-1?'-4px':''}"></div>
+                                <div class="my_timeline_node" :class="activity.abnormal_flag" :style="{'position':index===tree_items.length-1?'relative':'', 'top':index===tree_items.length-1?'-4px':''}"></div>
                                 <!--线-->
                                 <div class="my_timeline_item_line" v-if="index !== tree_items.length-1"></div>
                                 <!--标注-->
@@ -573,7 +573,6 @@ export default{
         postLogline(data){
             console.log(data)
             this.$store.commit('sliceSCATTERPLOT')
-            console.log(this.SCATTERPLOT.length)
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
             var all_number = []
@@ -618,33 +617,54 @@ export default{
             this.drawCoordinate(copy_eventdrops,coordinate_data, keys, min, max)
             
             this.drawEventDrop(null)
+            
             // console.log(data)
-            if(this.SELECTED_PROJECT=='tsne'){
-                var temp={
-                    'anomaly_label':1,
-                    'app': this.SELECTED_APP,
-                    'embedding_ids':'',
-                    'error_flag':'',
-                    'highlight':1,
-                    'template_ids':'',
-                    'x': data['tsne_x'],
-                    'y': data['tsne_y']
-                }
-                this.$store.commit('pushSCATTERPLOT', temp)
-            }else if(this.SELECTED_PROJECT=='umap'){
-                var temp={
-                    'anomaly_label':1,
-                    'app': this.SELECTED_APP,
-                    'embedding_ids':'',
-                    'error_flag':'',
-                    'highlight':1,
-                    'template_ids':'',
-                    'x': data['umap_x'],
-                    'y': data['umap_y']
-                }
-                this.$store.commit('pushSCATTERPLOT', temp)
+            // if(this.SELECTED_PROJECT=='tsne'){
+            //     var temp={
+            //         'anomaly_label':1,
+            //         'app': this.SELECTED_APP,
+            //         'embedding_ids':'',
+            //         'error_flag':'',
+            //         'highlight':1,
+            //         'template_ids':'',
+            //         'x': data['tsne_x'],
+            //         'y': data['tsne_y']
+            //     }
+            //     this.$store.commit('pushSCATTERPLOT', temp)
+            // }else if(this.SELECTED_PROJECT=='umap'){
+            //     var temp={
+            //         'anomaly_label':1,
+            //         'app': this.SELECTED_APP,
+            //         'embedding_ids':'',
+            //         'error_flag':'',
+            //         'highlight':1,
+            //         'template_ids':'',
+            //         'x': data['umap_x'],
+            //         'y': data['umap_y']
+            //     }
+            //     this.$store.commit('pushSCATTERPLOT', temp)
+            // }
+            // ================================== update scatterplot 
+            this.$store.commit('updateLOAD_B', true)
+            this.LOAD_D = true
+            const path = "http://localhost:5000/postLogline"
+            const payload = {
+                'window_info': data,
+                'scatterplot': this.SCATTERPLOT,
+                'window_embedding': data['actual_embeddings'],
+                'projection': this.SELECTED_PROJECT,
+                'app': this.SELECTED_APP
             }
-
+            axios.post(path, payload)
+            .then((res)=>{
+                console.log(res.data)
+                this.$store.commit('updateLOAD_B', false)
+                this.LOAD_D = false
+                this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
             this.getLIME(data['lime'])
         },
         drawEventDrop(id){
@@ -1047,12 +1067,39 @@ ul{
   width: 300px;
   vertical-align: top;
 }
-.my_timeline_node {
+.abnormal{
   width:10px;
   height: 10px;
-  color: #467AE9;
+  color: red;
   font-size: 18;
-  background: #467AE9;
+  background: red;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+.unknown{
+  width:10px;
+  height: 10px;
+  color: red;
+  font-size: 18;
+  background: red;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+.both{
+  width:10px;
+  height: 10px;
+  color: red;
+  font-size: 18;
+  background: red;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+.normal{
+  width:10px;
+  height: 10px;
+  color: green;
+  font-size: 18;
+  background: green;
   box-sizing: border-box;
   border-radius: 50%;
 }
