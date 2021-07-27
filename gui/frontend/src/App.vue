@@ -1,10 +1,19 @@
 <template>
   <div id="app" style="border: 1px solid black;border-radius: 5px;">
-      <el-row style="height:360px; border-bottom:1px solid grey">
+      <!-- <el-row style="height:360px; border-bottom:1px solid grey">
         <Embed/>
-      </el-row>
-      <el-row style="height:620px">
+      </el-row> -->
+      
+      <!-- <el-row style="height:620px">
          <Tree/>
+      </el-row> -->
+      <el-row style="height:980px;">
+        <el-col :span="6">
+          <Embed/>
+        </el-col>
+        <el-col :span="18">
+          <Tree/>
+        </el-col>
       </el-row>
 
   </div>
@@ -31,30 +40,6 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
-.el-row {
-    margin-bottom: 20px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-  .el-col {
-    border-radius: 4px;
-  }
-  .bg-purple-dark {
-    background: #99a9bf;
-  }
-  .bg-purple {
-    background: #d3dce6;
-  }
-  .bg-purple-light {
-    background: #e5e9f2;
-  }
-  .grid-content {
-    border-radius: 4px;
-    min-height: 36px;
-  }
-  .row-bg {
-    padding: 10px 0;
-    background-color: #f9fafc;
-  }
+
+
 </style>

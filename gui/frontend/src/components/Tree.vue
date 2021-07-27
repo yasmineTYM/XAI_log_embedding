@@ -1,38 +1,61 @@
 <template>
     <div>
-         <el-row>
-            <el-col :span="5" style="border-right:1px solid grey">
-                <div style="overflow:scroll;height:620px">
-                    <div>
-                        <div id="div_timeline"></div>
-                        <el-timeline>
-                            <el-timeline-item v-for="(activity, index) in tree_items" :timestamp="activity.utc_timestamp" placement="top" :class="activity.abnormal_flag">
-                                <el-card shadow="hover">
-                                    <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
-                                    <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>
-                                    <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
-                                    <div :id="activity.div_id"></div>
-                                </el-card>
-                            </el-timeline-item>
-                        </el-timeline>
+        <el-row class="scatter_row"></el-row>
+        <el-row style="overflow-x:scroll;height:321px;border-bottom:1px solid grey" class="timeLine">
+            <div id="div_timeline"></div>
+            <div class="app-container" v-if="show_tree">
+                <div class="timeLine" style="overflow: scroll;">
+                    <div class="ul_box" :style="{ width: ulWidth + 'px' }">
+                        <ul class="my_timeline" ref="mytimeline" style="margin-left: 10px;">
+                            <li class="my_timeline_item" v-for="(activity,index) in tree_items" :key="index">
+                                <!--圈圈节点-->
+                                <span>{{activity.utc_timestamp}}</span>
+                                <div class="my_timeline_node" :style="{'position':index===tree_items.length-1?'relative':'', 'top':index===tree_items.length-1?'-4px':''}"></div>
+                                <!--线-->
+                                <div class="my_timeline_item_line" v-if="index !== tree_items.length-1"></div>
+                                <!--标注-->
+                                <div class="my_timeline_item_content">
+                                    <el-card shadow="hover">
+                                        <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
+                                        <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>
+                                        <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
+                                        <div :id="activity.div_id"></div>
+                                    </el-card>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-            </el-col>
-            <el-col :span="19">
-                 
-                 <div style="height:120px; width: 1400px;overflow:scroll">
-                   <!-- <el-row  class="scatter_row"></el-row> -->
+            </div>
+            <!-- <el-timeline>
+                <el-timeline-item v-for="(activity, index) in tree_items" :timestamp="activity.utc_timestamp" placement="top" :class="activity.abnormal_flag">
+                    <el-card shadow="hover">
+                        <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
+                        <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>
+                        <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
+                        <div :id="activity.div_id"></div>
+                    </el-card>
+                </el-timeline-item>
+            </el-timeline> --> 
+        </el-row>
+        <el-row > 
+            <el-col :span="19" style="height:620px;border-right:1px solid grey">
+                <div style="height:120px; width: 1053px;">
                     <div id="div_event" v-loading="LOAD_D"></div>
                 </div>
-                <div style="height:220px; width: 1400px;">
-                   <!-- <el-row  class="scatter_row"></el-row> -->
+                <div style="height:220px; width: 1053px;">
                     <div id="div_embed"></div>
                 </div>
-                <div style="height:320px; width: 1400px;">
-                   <!-- <el-row  class="scatter_row"></el-row> -->
+                <div style="height:320px; width: 1053px;">
                     <div id="div_lime"></div>
                 </div>
             </el-col>
+            <el-col :span="5">
+                <div style="height:660px">
+                    <div id="div_log_detail"></div>
+                </div>
+            </el-col>
+            
         </el-row>
 
         
@@ -59,7 +82,9 @@ export default{
            LOAD_D: false,
            eventdrops:[],
            embed_template:[],
-           timeline:[]
+           timeline:[],
+           ulWidth: null,
+           div_width:1050
         }
     },
     
@@ -71,7 +96,6 @@ export default{
 
     },
     methods: {
-       
         drawLogline(data){
             // console.log(data)
             // this.postLogline(data)
@@ -334,9 +358,9 @@ export default{
             d3.select('#div_timeline').html('')
             var data = this.timeline
             // set the dimensions and margins of the graph
-            var margin = {top: 10, right: 30, bottom: 30, left: 60},
-                width = 360 - margin.left - margin.right,
-                height = 100 - margin.top - margin.bottom;
+            var margin = {top: 0, right: 30, bottom: 20, left: 60},
+                width = 1200 - margin.left - margin.right,
+                height = 40 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
             var svg = d3.select("#div_timeline")
@@ -490,6 +514,7 @@ export default{
                 this.drawTimeline()
 
                 this.tree_items = res.data
+                this.ulWidth = res.data.length * 300 +200
                 this.show_tree = true
                 
             })
@@ -519,6 +544,7 @@ export default{
                 })
                 this.drawTimeline()
                 this.tree_items = res.data
+                this.ulWidth = res.data.length * 300 +200
                 this.show_tree = true
              
             })
@@ -541,6 +567,7 @@ export default{
                 }
             })
             that.tree_items= new_item
+            that.ulWidth = new_item.length * 300 +200
             that.show_tree = true
         },
         postLogline(data){
@@ -654,8 +681,8 @@ export default{
             // this.eventdrops.pu
             d3.select('#div_embed').html('')
             // set the dimensions and margins of the graph
-            var margin = {top: 30, right: 10, bottom: 10, left: 120},
-            width = 1400 - margin.left - margin.right,
+            var margin = {top: 30, right: 5, bottom: 10, left: 30},
+            width = this.div_width - margin.left - margin.right,
             height = 220 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
@@ -798,8 +825,8 @@ export default{
             draw_data = draw_data.slice(0, 40)
             // console.log(data)
             // set the dimensions and margins of the graph
-            var margin = {top: 30, right: 30, bottom: 70, left: 120},
-                width = 1400 - margin.left - margin.right,
+            var margin = {top: 30, right: 5, bottom: 70, left: 30},
+                width = this.div_width - margin.left - margin.right,
                 height = 320 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
@@ -984,24 +1011,80 @@ export default{
 .unknown .el-timeline-item__node{
     background-color: #CC7351
 }
-.el-timeline-item__wrapper{
-    width:290px;
-}
-.el-timeline-item__content{
-    width:290px;
-}
+
 .el-card__body{
     height:200px;
     padding:0px;
     text-align: start;
     
 }
-.timeline_detail{
-    margin-left: 20px;
-    padding-top:10px;
-    /* border-left: steelblue 3px solid; */
+.el-card{
+    width:280px;
 }
+
 ul{
     padding-inline-start: 20px;
+}
+
+/* timeline */
+.ul_box {
+  /* width: 2800px; */
+  height: 270px;
+  /* width:100%; */
+  display: inline-block;
+  float: left;
+  overflow:auto;
+  overflow-y:hidden
+}
+.my_timeline{
+    display: inline-block;
+    overflow: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+}
+.my_timeline_item {
+  display: inline-block;
+  width: 300px;
+  vertical-align: top;
+}
+.my_timeline_node {
+  width:10px;
+  height: 10px;
+  color: #467AE9;
+  font-size: 18;
+  background: #467AE9;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+.my_timeline_item_line {
+  width: 300px;
+  height: 10px;
+  margin: -6px 0 0 10px;
+  border-top: 2px solid #E4E7ED;
+  border-left: none;
+}
+.my_timeline_item_content {
+  margin: 10px 0 0 -10px;
+  display: flex;
+  flex-flow: column;
+  cursor: pointer;
+}
+
+/* scroll bar  */
+.timeLine::-webkit-scrollbar-track {
+  /* -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #F5F5F5; */
+}
+
+.timeLine::-webkit-scrollbar {
+  width: 4px;
+  background-color: white;
+}
+
+.timeLine::-webkit-scrollbar-thumb {
+  /* border-radius: 6px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+  background-color: rgb(197, 194, 194); */
 }
 </style>

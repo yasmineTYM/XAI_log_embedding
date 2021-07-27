@@ -23,36 +23,38 @@
             </el-col>
         </el-row>
         <el-row>
-            <el-col :span="5" style="border-right:1px solid grey">
-                <div style="height:320px;">
-                    
-                    <el-row>
-                        <div id="div_scatter" v-loading="LOAD_B">
-                            <el-slider v-model="hexbin_radius_ratio" style="width:70px; margin-left:5px" @change="draw"></el-slider>
-                        </div>
-                    </el-row>
+            <div style="height:320px; border-bottom:1px solid grey;border-right:1px solid grey">
+                <div id="div_scatter" v-loading="LOAD_B">
+                    <el-slider v-model="hexbin_radius_ratio" style="width:70px; margin-left:5px" @change="draw"></el-slider>
                 </div>
-            </el-col>
-            <el-col :span="19">
-                <div style="height:320px;">
-                    <!-- <el-row class="scatter_row">
-                    </el-row> -->
-                    <el-row>
-                        <el-col :span="3">
-                            <div id="div_heatmap_count_error"></div>
-                        </el-col>
-                        <el-col :span="3">
-                            <div id="div_heatmap_count_template"></div>
-                        </el-col>
-                        <el-col :span="3">
-                            <div id="div_heatmap_count_embedding"></div>
-                        </el-col>
-                        <el-col :span="10">
-                            <div id="div_heatmap_sequence_error"></div>
-                        </el-col>
-                    </el-row>
-                </div>
-            </el-col>
+            </div>
+        </el-row>
+        <el-row>
+            <div style="height:620px;border-right:1px solid grey; overflow:scroll" class="heatmap_div">
+                <el-row>
+                     <div id="div_heatmap_count_error"></div>
+                </el-row>
+                <el-row>
+                    <div id="div_heatmap_count_template"></div>
+                </el-row>
+                <el-row>
+                    <div id="div_heatmap_count_embedding"></div>
+                </el-row>
+                <!-- <el-row>
+                    <el-col :span="3">
+                       
+                    </el-col>
+                    <el-col :span="3">
+                        
+                    </el-col>
+                    <el-col :span="3">
+                        
+                    </el-col>
+                    <el-col :span="10">
+                        <div id="div_heatmap_sequence_error"></div>
+                    </el-col>
+                </el-row> -->
+            </div>
         </el-row>
         
         
@@ -154,8 +156,8 @@ export default{
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
             var margin = {top: 30, right: 10, bottom: 50, left: 50},
-            width = d3.max([200,myGroups.length*20]) - margin.left - margin.right,
-            height = 310 - margin.top - margin.bottom;
+            width = d3.max([400,myGroups.length*20]) - margin.left - margin.right,
+            height = 210 - margin.top - margin.bottom;
             // append the svg object to the body of the page
             var svg = d3.select(div_id)
             .append("svg")
@@ -528,5 +530,21 @@ circle {
     width: 6px;
     height: 6px;
     /* margin-top: 10px; */
+}
+
+/* scroll bar  */
+.heatmap_div::-webkit-scrollbar-track {
+  /* -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  background-color: #F5F5F5; */
+}
+.heatmap_div::-webkit-scrollbar {
+  width: 4px;
+  background-color: white;
+}
+.heatmap_div::-webkit-scrollbar-thumb {
+  /* border-radius: 6px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+  background-color: rgb(197, 194, 194); */
 }
 </style>
