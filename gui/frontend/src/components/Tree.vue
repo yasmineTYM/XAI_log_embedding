@@ -572,7 +572,7 @@ export default{
         },
         postLogline(data){
             console.log(data)
-            this.$store.commit('sliceSCATTERPLOT')
+            // this.$store.commit('sliceSCATTERPLOT')
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
             var all_number = []

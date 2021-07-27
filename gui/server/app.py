@@ -281,7 +281,10 @@ def postLogline():
     new_embedding = request.get_json()['window_embedding']
     embedding_=[]
     for ele in scatterplot_pd['embeddings'].tolist():
-        embedding_.append(ast.literal_eval(ele))
+        try:
+            embedding_.append(ast.literal_eval(ele))
+        except:
+            embedding_.append(ele)
     list(embedding_).append(new_embedding)
 
     projection = request.get_json()['projection']
