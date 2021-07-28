@@ -709,8 +709,11 @@ export default{
             /*
             * Parameters
             *****************************/
-            const width = this.div_width, height = 220, padding = 28, brush_width = 20;
+            const  padding = 28, brush_width = 20;
             const filters = {};
+            var margin = {top: 30, right: 5, bottom: 10, left: 30},
+            width = this.div_width - margin.left - margin.right,
+            height = 220 - margin.top - margin.bottom;
 
             /*
             * Helper functions
@@ -775,14 +778,15 @@ export default{
             const lineGenerator = d3.line();
 
             const linePath = function(d){
-            const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type'));
-            let points = _data.map(x=>([xScale(x.key),yScales[x.key](x.value)]));
-                return(lineGenerator(points));
+                const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type'));
+                let points = _data.map(x=>([xScale(x.key),yScales[x.key](x.value)]));
+                    return(lineGenerator(points));
             }
 
             /*
             * Parallel Coordinates
             *****************************/
+            d3.select('#div_embed').html('')
             // Main svg container
             const pcSvg = d3.select('#div_embed')
             .append('svg')
@@ -791,22 +795,22 @@ export default{
 
             // Inactive data
             pcSvg.append('g').attr('class','inactive').selectAll('path')
-            .data(data)
-            .enter()
+                .data(data)
+                .enter()
                 .append('path')
                 .attr('d', d=>linePath(d));
 
             // Inactive data
             pcSvg.append('g').attr('class','active').selectAll('path')
-            .data(data)
-            .enter()
+                .data(data)
+                .enter()
                 .append('path')
                 .attr('d', d=>linePath(d));
 
             // Vertical axis for the features
             const featureAxisG = pcSvg.selectAll('g.feature')
-            .data(features)
-            .enter()
+                .data(features)
+                .enter()
                 .append('g')
                 .attr('class','feature')
                 .attr('transform',d=>('translate('+xScale(d.name)+',0)'));
