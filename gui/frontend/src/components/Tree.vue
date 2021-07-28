@@ -575,34 +575,44 @@ export default{
             // this.$store.commit('sliceSCATTERPLOT')
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
-            var all_number = []
-            
+            // ===========================1. append log embeddings ===========================
             var log_embeddings = data['log_embeddings']
+            var id = 0
             log_embeddings.forEach(function(d){
                 var result = {};
-                all_number = all_number.concat(d)
                 keys.forEach((key, i) => result[key] = d[i])
                 result['type']='logs'
+                result['player'] = id
                 coordinate_data.push(result)
+                id = id+1
             })
-
+            // ===========================. append actual embeddings  ===========================
             var result = {};
             keys.forEach((key, i) => result[key] = data['actual_embeddings'][i])
             result['type'] = 'actual'
-            all_number = all_number.concat(data['actual_embeddings'])
+            result['player'] = id
+            id+=1
             coordinate_data.push(result)
-            // console.log(data['actual_embeddings'])
+            // ===========================. append expected embeddings  ===========================
             var result = {};
             var values = data['alert']['features'][0]['value']['log_anomaly_data']['embedding_expected']
             keys.forEach((key, i) => result[key] = values[i])
+            result['player'] = id
             result['type'] = 'expected'
-            all_number = all_number.concat(values)
             coordinate_data.push(result)
-            // console.log(values)
             
-            // console.log(all_number)
-            var min = d3.min(all_number)
-            var max = d3.max(all_number)
+            // var min = d3.min(all_number)
+            // var max = d3.max(all_number)
+            var features = []
+            keys.forEach(function(d){
+                let e = d3.extent(coordinate_data, p=>p[d])
+                features.push({
+                    'name': d,
+                    'range': e
+                })
+            })
+            // console.log(features)
+            // console.log(d3.extent(coordinate_data, d=>d.dim1))
             // console.log(coordinate_data, min,max);
             //prepare data for coordinates
 
@@ -614,7 +624,7 @@ export default{
             data['eventdrops'].forEach(function(d){
                 copy_eventdrops.push(d)
             })
-            this.drawCoordinate(copy_eventdrops,coordinate_data, keys, min, max)
+            this.drawCoordinate(copy_eventdrops,coordinate_data, keys, features)
             
             this.drawEventDrop(null)
             
@@ -695,135 +705,261 @@ export default{
                 .data([repositoriesData])
                 .call(chart);
         },
-        drawCoordinate(raw,data,dimensions,min,max){
-            // console.log(raw)
-            
-            // this.eventdrops.pu
-            d3.select('#div_embed').html('')
-            // set the dimensions and margins of the graph
-            var margin = {top: 30, right: 5, bottom: 10, left: 30},
-            width = this.div_width - margin.left - margin.right,
-            height = 220 - margin.top - margin.bottom;
+        drawCoordinate(raw,data,dimensions, features){
+            /*
+            * Parameters
+            *****************************/
+            const width = this.div_width, height = 220, padding = 28, brush_width = 20;
+            const filters = {};
 
-            // append the svg object to the body of the page
-            var svg = d3.select("#div_embed")
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform",
-                    "translate(" + margin.left + "," + margin.top + ")");
+            /*
+            * Helper functions
+            *****************************/
+            // Horizontal scale
+            const xScale = d3.scalePoint()
+            .domain(features.map(x=>x.name))
+            .range([padding, width-padding]);
 
-            // Color scale: give me a specie name, I return a color
-            var color = d3.scaleOrdinal()
-                .domain(["actual", "expected", "logs" ])
-                .range([ "red", "green", "#F6D186"])
+            // Each vertical scale
+            const yScales = {};
+            features.map(x=>{
+                console.log(x.name)
+            yScales[x.name] = d3.scaleLinear()
+                .domain(x.range)
+                .range([height-padding, padding]);
+            });
+            // Each axis generator
+            const yAxis = {};
+            d3.entries(yScales).map(x=>{
+                yAxis[x.key] = d3.axisLeft(x.value);
+            });
 
-            // Here I set the list of dimension manually to control the order of axis:
-            // dimensions = ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
-
-            // For each dimension, I build a linear scale. I store all in a y object
-            
-            var y = {}
-            for (let i in dimensions) {
-                name = dimensions[i]
-                y[name] = d3.scaleLinear()
-                .domain( [min,max] ) // --> Same axis range for each group
-                // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
-                .range([height, 0])
+            // Each brush generator
+            const brushEventHandler = function(feature){
+            if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") 
+                return; // ignore brush-by-zoom
+            if(d3.event.selection != null){
+                filters[feature] = d3.event.selection.map(d=>yScales[feature].invert(d));
+            }else{
+                if(feature in filters)
+                delete(filters[feature]);
+            }
+            applyFilters();
             }
 
-            // Build the X scale -> it find the best position for each Y axis
-            var x = d3.scalePoint()
-                .range([0, width])
-                .domain(dimensions);
-            // Highlight the specie that is hovered
-            var that = this
-            var highlight = function(d,i){
-                // console.log(raw['log_embeddings'][i])
-                console.log(raw[i])
-                var selected_specie = d.type
-                // first every group turns grey
-                d3.selectAll(".line")
-                // .transition().duration(200)
-                .style("stroke", "lightgrey")
-                .style("opacity", "0.2")
-
-                d3.select(this).style('stroke','red')
-                that.drawEventDrop(i)
-                // Second the hovered specie takes its color
-                // d3.selectAll("." + selected_specie)
-                // // .transition().duration(200)
-                // .style("stroke", color(selected_specie))
-                // .style("opacity", "1")
+            const applyFilters = function(){
+            d3.select('g.active').selectAll('path')
+                .style('display', d=>(selected(d)?null:'none'));
             }
-                        // Unhighlight
-            var doNotHighlight = function(d){
-                paths.style("stroke", function(d){ return( color(d.type))})
-                .style('stroke-width',function(d){
-                    if(d.type == 'actual' || d.type=='expected'){
-                        return 2
-                    } else{
-                        return 2
-                    }
-                })
-                .style("opacity", 0.5)
-                // d3.selectAll(".line")
-                // // .transition().duration(200).delay(1000)
-                // .style("stroke", function(d){ return( color(d.type))} )
-                // .style("opacity", "1")
+                    
+            const selected = function(d){
+            const _filters = d3.entries(filters);
+            return _filters.every(f=>{
+                return f.value[1] <= d[f.key] && d[f.key] <= f.value[0];
+            });
             }
 
-            // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
-            function path(d) {
-                return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+            const yBrushes = {};
+            d3.entries(yScales).map(x=>{
+            let extent = [
+                [-(brush_width/2), padding],
+                [brush_width/2, height-padding]
+            ];
+            yBrushes[x.key]= d3.brushY()
+                .extent(extent)
+                .on('brush', ()=>brushEventHandler(x.key))
+                .on('end', ()=>brushEventHandler(x.key));
+            });
+
+            // Paths for data
+            const lineGenerator = d3.line();
+
+            const linePath = function(d){
+            const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type'));
+            let points = _data.map(x=>([xScale(x.key),yScales[x.key](x.value)]));
+                return(lineGenerator(points));
             }
 
-            // Draw the lines
-            var paths = svg.selectAll("myPath")
-                .data(data)
-                .enter()
-                .append("path")
-                .attr("class", function (d) { return "line " + d.type } ) // 2 class for each line: 'line' and the group name
-                .attr("d",  path)
-                .style("fill", "none" )
-                .style("stroke", function(d){ return( color(d.type))})
-                .style('stroke-width',function(d){
-                    if(d.type == 'actual' || d.type=='expected'){
-                        return 2
-                    } else{
-                        return 2
-                    }
-                })
-                .style("opacity", 0.5)
-                .on("mouseover", highlight)
-                .on("mouseleave", doNotHighlight)
-            // paths.append('title')
-            // .text(function(d,i){
-            //     console.log(raw[i],d,i)
-            //     // return raw[i]['message']
-            //     // console.log(raw['eventdrops'])
-            //     // return raw[i]['message']
-            // })
+            /*
+            * Parallel Coordinates
+            *****************************/
+            // Main svg container
+            const pcSvg = d3.select('#div_embed')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
 
-            // Draw the axis:
-            svg.selectAll("myAxis")
-                // For each dimension of the dataset I add a 'g' element:
-                .data(dimensions).enter()
-                .append("g")
-                .attr("class", "axis")
-                // I translate this element to its right position on the x axis
-                .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
-                // And I build the axis with the call function
-                .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d])); })
-                // Add axis title
-                .append("text")
-                .style("text-anchor", "middle")
-                .attr("y", -9)
-                .text(function(d) { return d; })
-                .style("fill", "black")
+            // Inactive data
+            pcSvg.append('g').attr('class','inactive').selectAll('path')
+            .data(data)
+            .enter()
+                .append('path')
+                .attr('d', d=>linePath(d));
 
+            // Inactive data
+            pcSvg.append('g').attr('class','active').selectAll('path')
+            .data(data)
+            .enter()
+                .append('path')
+                .attr('d', d=>linePath(d));
+
+            // Vertical axis for the features
+            const featureAxisG = pcSvg.selectAll('g.feature')
+            .data(features)
+            .enter()
+                .append('g')
+                .attr('class','feature')
+                .attr('transform',d=>('translate('+xScale(d.name)+',0)'));
+
+            featureAxisG
+                .append('g')
+                .each(function(d){
+                    d3.select(this).call(yAxis[d.name]);
+                });
+
+            featureAxisG
+            .each(function(d){
+                d3.select(this)
+                .append('g')
+                .attr('class','brush')
+                .call(yBrushes[d.name]);
+            });
+
+            featureAxisG
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr('y', padding/2)
+            .text(d=>d.name);
         },
+        // drawCoordinate(raw,data,dimensions,min,max){
+        //     // console.log(raw)
+            
+        //     // this.eventdrops.pu
+        //     d3.select('#div_embed').html('')
+        //     // set the dimensions and margins of the graph
+        //     var margin = {top: 30, right: 5, bottom: 10, left: 30},
+        //     width = this.div_width - margin.left - margin.right,
+        //     height = 220 - margin.top - margin.bottom;
+
+        //     // append the svg object to the body of the page
+        //     var svg = d3.select("#div_embed")
+        //     .append("svg")
+        //     .attr("width", width + margin.left + margin.right)
+        //     .attr("height", height + margin.top + margin.bottom)
+        //     .append("g")
+        //     .attr("transform",
+        //             "translate(" + margin.left + "," + margin.top + ")");
+
+        //     // Color scale: give me a specie name, I return a color
+        //     var color = d3.scaleOrdinal()
+        //         .domain(["actual", "expected", "logs" ])
+        //         .range([ "red", "green", "#F6D186"])
+
+        //     // Here I set the list of dimension manually to control the order of axis:
+        //     // dimensions = ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
+
+        //     // For each dimension, I build a linear scale. I store all in a y object
+            
+        //     var y = {}
+        //     for (let i in dimensions) {
+        //         name = dimensions[i]
+        //         y[name] = d3.scaleLinear()
+        //         .domain( [min,max] ) // --> Same axis range for each group
+        //         // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+        //         .range([height, 0])
+        //     }
+
+        //     // Build the X scale -> it find the best position for each Y axis
+        //     var x = d3.scalePoint()
+        //         .range([0, width])
+        //         .domain(dimensions);
+        //     // Highlight the specie that is hovered
+        //     var that = this
+        //     var highlight = function(d,i){
+        //         // console.log(raw['log_embeddings'][i])
+        //         console.log(raw[i])
+        //         var selected_specie = d.type
+        //         // first every group turns grey
+        //         d3.selectAll(".line")
+        //         // .transition().duration(200)
+        //         .style("stroke", "lightgrey")
+        //         .style("opacity", "0.2")
+
+        //         d3.select(this).style('stroke','red')
+        //         that.drawEventDrop(i)
+        //         // Second the hovered specie takes its color
+        //         // d3.selectAll("." + selected_specie)
+        //         // // .transition().duration(200)
+        //         // .style("stroke", color(selected_specie))
+        //         // .style("opacity", "1")
+        //     }
+        //                 // Unhighlight
+        //     var doNotHighlight = function(d){
+        //         paths.style("stroke", function(d){ return( color(d.type))})
+        //         .style('stroke-width',function(d){
+        //             if(d.type == 'actual' || d.type=='expected'){
+        //                 return 2
+        //             } else{
+        //                 return 2
+        //             }
+        //         })
+        //         .style("opacity", 0.5)
+        //         // d3.selectAll(".line")
+        //         // // .transition().duration(200).delay(1000)
+        //         // .style("stroke", function(d){ return( color(d.type))} )
+        //         // .style("opacity", "1")
+        //     }
+
+        //     // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+        //     function path(d) {
+        //         return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+        //     }
+
+        //     // Draw the lines
+        //     var paths = svg.selectAll("myPath")
+        //         .data(data)
+        //         .enter()
+        //         .append("path")
+        //         .attr("class", function (d) { return "line " + d.type } ) // 2 class for each line: 'line' and the group name
+        //         .attr("d",  path)
+        //         .style("fill", "none" )
+        //         .style("stroke", function(d){ return( color(d.type))})
+        //         .style('stroke-width',function(d){
+        //             if(d.type == 'actual' || d.type=='expected'){
+        //                 return 2
+        //             } else{
+        //                 return 2
+        //             }
+        //         })
+        //         .style("opacity", 0.5)
+        //         .on("mouseover", highlight)
+        //         .on("mouseleave", doNotHighlight)
+        //     // paths.append('title')
+        //     // .text(function(d,i){
+        //     //     console.log(raw[i],d,i)
+        //     //     // return raw[i]['message']
+        //     //     // console.log(raw['eventdrops'])
+        //     //     // return raw[i]['message']
+        //     // })
+
+        //     // Draw the axis:
+        //     svg.selectAll("myAxis")
+        //         // For each dimension of the dataset I add a 'g' element:
+        //         .data(dimensions).enter()
+        //         .append("g")
+        //         .attr("class", "axis")
+        //         // I translate this element to its right position on the x axis
+        //         .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+        //         // And I build the axis with the call function
+        //         .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d])); })
+        //         // Add axis title
+        //         .append("text")
+        //         .style("text-anchor", "middle")
+        //         .attr("y", -9)
+        //         .text(function(d) { return d; })
+        //         .style("fill", "black")
+
+        // },
         drawLIME(data){
             d3.select('#div_lime').html('')
             var data = data.replace('[(','').replace(')]','').split('), (')
@@ -1135,4 +1271,13 @@ ul{
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
   background-color: rgb(197, 194, 194); */
 }
+g.inactive path, g.active path{
+  fill: none;
+  stroke: lightgrey;
+  stroke-linecap:"round"
+}
+g.active path{
+  stroke:#0081af;
+}
+
 </style>
