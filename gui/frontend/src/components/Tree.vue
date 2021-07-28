@@ -665,7 +665,7 @@ export default{
             .catch((error)=>{
                 console.log(error)
             })
-            this.getLIME(data['lime'])
+            this.drawLIME(data['lime'])
         },
         drawEventDrop(id){
             // console.log('func')
@@ -741,7 +741,7 @@ export default{
             var that = this
             var highlight = function(d,i){
                 // console.log(raw['log_embeddings'][i])
-                
+                console.log(raw[i])
                 var selected_specie = d.type
                 // first every group turns grey
                 d3.selectAll(".line")
@@ -824,7 +824,7 @@ export default{
                 .style("fill", "black")
 
         },
-        getLIME(data){
+        drawLIME(data){
             d3.select('#div_lime').html('')
             var data = data.replace('[(','').replace(')]','').split('), (')
             
@@ -909,6 +909,7 @@ export default{
                     return '#4E89AE'
                 }
             })
+        
             var that = this
             bars.append('title')
             .text(function(d){
