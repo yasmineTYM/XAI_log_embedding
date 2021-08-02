@@ -368,6 +368,7 @@ def baseLine():
     substraction_embdding = np.subtract(input_embedding,expected_embedding)
     ## get the largest k dimensions 
     abs_embedding = np.absolute(substraction_embdding)
+    # print(abs_embedding)
     k_dimensions = abs_embedding.argsort()[-3:][::-1]
     dimensions_sort = abs_embedding.argsort()[-20:][::-1].tolist()
     dimensions_sort_list = []
@@ -393,8 +394,9 @@ def baseLine():
         else:
             log_indicator.append(0)       
     return jsonify({
-        'dimension_sort': dimensions_sort_list,
-        'output': log_indicator
+        'dimension_sort': sorted(dimensions_sort_list, key = lambda i: i['dim']),
+        'output': log_indicator,
+        'test':dimensions_sort
     })
 if __name__ == '__main__':
     app.run()

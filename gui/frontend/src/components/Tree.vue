@@ -104,151 +104,151 @@ export default{
 
     },
     methods: {
-        drawLogline(data){
-            // console.log(data)
-            // this.postLogline(data)
-            d3.select('#div_detail').html('')
-            const rect_width = 90
-            const rect_height = 30
-            const space = 10
+        // drawLogline(data){
+        //     // console.log(data)
+        //     // this.postLogline(data)
+        //     d3.select('#div_detail').html('')
+        //     const rect_width = 90
+        //     const rect_height = 30
+        //     const space = 10
 
-            var margin = {top: 10, right: 30, bottom: 40, left: 50},
-                width = d3.max([data.length*(rect_width+space), 1500]),
-                height = 600 - margin.top - margin.bottom;
+        //     var margin = {top: 10, right: 30, bottom: 40, left: 50},
+        //         width = d3.max([data.length*(rect_width+space), 1500]),
+        //         height = 600 - margin.top - margin.bottom;
 
-            // append the svg object to the body of the page
-            var svg = d3.select("#div_detail")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform",
-                    "translate(" + margin.left + "," + margin.top + ")");
+        //     // append the svg object to the body of the page
+        //     var svg = d3.select("#div_detail")
+        //         .append("svg")
+        //         .attr("width", width + margin.left + margin.right)
+        //         .attr("height", height + margin.top + margin.bottom)
+        //         .append("g")
+        //         .attr("transform",
+        //             "translate(" + margin.left + "," + margin.top + ")");
             
-            const y_position = 100
-            // ===================== step1, append line ==================
-            svg.append('line')
-            .style('stroke', 'grey')
-            .style('stroke-width',3)
-            .attr('x1',0)
-            .attr('x2',1300)
-            .attr('y1', y_position)
-            .attr('y2', y_position);
+        //     const y_position = 100
+        //     // ===================== step1, append line ==================
+        //     svg.append('line')
+        //     .style('stroke', 'grey')
+        //     .style('stroke-width',3)
+        //     .attr('x1',0)
+        //     .attr('x2',1300)
+        //     .attr('y1', y_position)
+        //     .attr('y2', y_position);
 
-            // ===================step2, append rectangle ==================
-            var logline = svg.selectAll('.rect')
-            .data(data)
-            .enter()
-            .append('g')
+        //     // ===================step2, append rectangle ==================
+        //     var logline = svg.selectAll('.rect')
+        //     .data(data)
+        //     .enter()
+        //     .append('g')
             
            
-            var rect = logline.append('rect')
-            .attr("rx", 4)
-            .attr('width', rect_width)
-            .attr('height', rect_height)
-            .attr('x',function(d,i){
-                return i*rect_width + (i+1)*space
-            })
-            .attr('y', y_position-rect_height/2)
-            .attr('fill',function(d){
-                if(d['features'][0]['obj_value']['error_flag']=='false'){
-                    return '#91cf60'
-                }else{
-                    return '#d73027'
-                }
-            })
-            .on('click', function(d){
-                console.log(d)
-            })
-            rect.append('title')
-            .text(function(d){
-                return d['message']
-            })
-            // ================== step3: append text ==================
-            var text = logline.append('text')
-            .text(function(d){
-                return d['instance_id']
-            })
-            .style('text-anchor','middle')
-            .attr('x',function(d,i){
-                return (i+0.5)*rect_width + (i+1)*space
-            })
-            .attr('y', y_position+3)
+        //     var rect = logline.append('rect')
+        //     .attr("rx", 4)
+        //     .attr('width', rect_width)
+        //     .attr('height', rect_height)
+        //     .attr('x',function(d,i){
+        //         return i*rect_width + (i+1)*space
+        //     })
+        //     .attr('y', y_position-rect_height/2)
+        //     .attr('fill',function(d){
+        //         if(d['features'][0]['obj_value']['error_flag']=='false'){
+        //             return '#91cf60'
+        //         }else{
+        //             return '#d73027'
+        //         }
+        //     })
+        //     .on('click', function(d){
+        //         console.log(d)
+        //     })
+        //     rect.append('title')
+        //     .text(function(d){
+        //         return d['message']
+        //     })
+        //     // ================== step3: append text ==================
+        //     var text = logline.append('text')
+        //     .text(function(d){
+        //         return d['instance_id']
+        //     })
+        //     .style('text-anchor','middle')
+        //     .attr('x',function(d,i){
+        //         return (i+0.5)*rect_width + (i+1)*space
+        //     })
+        //     .attr('y', y_position+3)
            
-            .style('pointer-events', 'none')
+        //     .style('pointer-events', 'none')
 
 
-            var x_mapping = []
-            for(let i=0; i<data.length;i++){
-                x_mapping.push(i)
-            }
-            var x = d3.scaleBand()
-                .domain(x_mapping)
-                .range([ 0, width ]);
+        //     var x_mapping = []
+        //     for(let i=0; i<data.length;i++){
+        //         x_mapping.push(i)
+        //     }
+        //     var x = d3.scaleBand()
+        //         .domain(x_mapping)
+        //         .range([ 0, width ]);
 
-            // ================== step4: append score ==================
+        //     // ================== step4: append score ==================
 
-            const score_range = 40
-            var y1 = d3.scaleLinear()
-            .domain([0, d3.max(data, function(d) { return +d.positive_score; })])
-            .range([ score_range, 0 ]);
+        //     const score_range = 40
+        //     var y1 = d3.scaleLinear()
+        //     .domain([0, d3.max(data, function(d) { return +d.positive_score; })])
+        //     .range([ score_range, 0 ]);
             
-            var y2 = d3.scaleLinear()
-            .domain([0, d3.max(data, function(d) { return +d.negative_score; })])
-            .range([ score_range, 0 ]);
+        //     var y2 = d3.scaleLinear()
+        //     .domain([0, d3.max(data, function(d) { return +d.negative_score; })])
+        //     .range([ score_range, 0 ]);
 
-            var line_positive_data = []
-            var line_negative_data = []
-            data.forEach(function(d,i){
-                let x = (i+0.5)*rect_width + (i+1)*space
-                let y_positive = y_position - y1(d['positive_score'])
-                let y_negative = y_position + y2(d['negative_score'])
-                line_positive_data.push({
-                    'x': x,
-                    'y': (y_positive-rect_height/2),
-                })
-                line_negative_data.push({
-                    'x':x,
-                    'y':(y_negative+rect_height/2),
-                })
-            })
+        //     var line_positive_data = []
+        //     var line_negative_data = []
+        //     data.forEach(function(d,i){
+        //         let x = (i+0.5)*rect_width + (i+1)*space
+        //         let y_positive = y_position - y1(d['positive_score'])
+        //         let y_negative = y_position + y2(d['negative_score'])
+        //         line_positive_data.push({
+        //             'x': x,
+        //             'y': (y_positive-rect_height/2),
+        //         })
+        //         line_negative_data.push({
+        //             'x':x,
+        //             'y':(y_negative+rect_height/2),
+        //         })
+        //     })
 
-            var lineGenerator = d3.line()
-            // .curve(d3.curveBasis)
-            // .curve(d3.curveLinear)
-            .curve(d3.curveCardinal)
-            .x(function(d){return d.x})
-            // .y0(function(d){return d.y0})
-            .y((p)=>p.y);
+        //     var lineGenerator = d3.line()
+        //     // .curve(d3.curveBasis)
+        //     // .curve(d3.curveLinear)
+        //     .curve(d3.curveCardinal)
+        //     .x(function(d){return d.x})
+        //     // .y0(function(d){return d.y0})
+        //     .y((p)=>p.y);
 
-            var path_positive = svg.append('path')
-            .attr('d', lineGenerator(line_positive_data))
-            .style('fill','white')
-            .style('stroke','black')
+        //     var path_positive = svg.append('path')
+        //     .attr('d', lineGenerator(line_positive_data))
+        //     .style('fill','white')
+        //     .style('stroke','black')
             
-            var path_positive = svg.append('path')
-            .attr('d', lineGenerator(line_negative_data))
-            .style('fill','white')
-            .style('stroke','black')
+        //     var path_positive = svg.append('path')
+        //     .attr('d', lineGenerator(line_negative_data))
+        //     .style('fill','white')
+        //     .style('stroke','black')
 
-            var circles = svg.append('g')
-            .selectAll('.line_circle')
-            .data(line_positive_data)
-            .enter()
-            .append('circle')
-            .attr('cx', (d)=> d.x)
-            .attr('cy', (d)=> d.y)
-            .attr('r', 3)
+        //     var circles = svg.append('g')
+        //     .selectAll('.line_circle')
+        //     .data(line_positive_data)
+        //     .enter()
+        //     .append('circle')
+        //     .attr('cx', (d)=> d.x)
+        //     .attr('cy', (d)=> d.y)
+        //     .attr('r', 3)
 
-            var circles = svg.append('g')
-            .selectAll('.line_circle')
-            .data(line_negative_data)
-            .enter()
-            .append('circle')
-            .attr('cx', (d)=> d.x)
-            .attr('cy', (d)=> d.y)
-            .attr('r', 3)
-        },
+        //     var circles = svg.append('g')
+        //     .selectAll('.line_circle')
+        //     .data(line_negative_data)
+        //     .enter()
+        //     .append('circle')
+        //     .attr('cx', (d)=> d.x)
+        //     .attr('cy', (d)=> d.y)
+        //     .attr('r', 3)
+        // },
         drawDetail(div_id, raw){
             d3.select('#'+div_id).html('')
             var ti = raw['template_ids']
@@ -713,16 +713,12 @@ export default{
             /*
             * Parameters
             *****************************/
-           console.log(data)
-            const  padding = 28, brush_width = 20;
+        //    console.log(data)
+            const  padding = 38, brush_width = 20;
             const filters = {};
             var margin = {top: 30, right: 5, bottom: 10, left: 30},
             width = this.div_width - margin.left - margin.right,
             height = 220 - margin.top - margin.bottom;
-
-
-           
-
 
             /*
             * Helper functions
@@ -834,7 +830,8 @@ export default{
                 .enter()
                 .append('path')
                 .attr('class', function(d){return d['type']+'_'+d['baseline'].toString()})
-                .attr('d', d=>linePath(d));
+                .attr('d', d=>linePath(d))
+                .style('stroke-width','2px');
 
             // Vertical axis for the features
             const featureAxisG = pcSvg.selectAll('g.feature')
@@ -842,8 +839,8 @@ export default{
                 .enter()
                 .append('g')
                 .attr('class','feature')
-                .attr('transform',d=>('translate('+xScale(d.name)+',0)'));
-
+                .attr('transform',d=>('translate('+xScale(d.name)+',0)'))
+                
             featureAxisG
                 .append('g')
                 .each(function(d){
@@ -858,20 +855,21 @@ export default{
                 .call(yBrushes[d.name]);
             });
 
-            featureAxisG
-            .append("text")
-            .attr("text-anchor", "middle")
-            .attr('y', padding/2)
-            .text(d=>d.name);
+            // featureAxisG
+            // .append("text")
+            // .attr("text-anchor", "middle")
+            // .attr('y', padding/2)
+            // .text(d=>d.name);
 
 
-            var dim_x = d3.scaleband()
+            var dim_x = d3.scalePoint()
             .domain(Object.keys(dimension))
             .range([padding, width-padding])
 
+            
             var dim_y = d3.scaleLinear()
             .domain([0, dimension.length])
-            .range([50,0])
+            .range([30,0])
 
             var line_data = []
             dimension.forEach(function(d){
@@ -880,15 +878,28 @@ export default{
                     'y': dim_y(d['value'])
                 })
             })
-            var lineGenerator = d3.line()
-            .curve(d3.curveCardinal)
+            // console.log(line_data)
+            var lineGenerator_dim = d3.line()
+            .curve(d3.curveStepAfter)
             .x(d=>d.x)
             .y(d=>d.y)
 
-            var path = svg.append('path')
-            .attr('d', lineGenerator(line_data))
+            var path = pcSvg.append('path')
+            .attr('d', lineGenerator_dim(line_data))
             .style('fill', 'white')
-            .style('stroke','black')
+            .style('stroke-width','3px')
+            .style('stroke','#D79771')
+
+             // Add the scatterplot
+            var dots = pcSvg.selectAll("dot")
+            .data(line_data)
+            .enter().append("circle")
+            .style('opacity',1)
+            .style('fill','#B05B3B')
+            .attr("r", 4)
+            .attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; });
+
         },
      
         drawLIME(data){
@@ -1012,8 +1023,17 @@ export default{
         drawTable(){
             var that = this
             console.log(that.brushed_items)
+            var tableData = []
+            that.brushed_items.forEach(function(d){
+                tableData.push({
+                    'message': d['message'],
+                    'instance_id': d['instance_id'],
+                    'timestamp': d['timestamp'],
+                    'error_flag': d['features'][0]['obj_value']['error_flag']
+                })
+            })
             var table = new Tabulator("#div_log_detail", {
-                data: that.brushed_items,
+                data: tableData,
                 height:'620px',
                 // width: '270px',
                 layout: "fitColumns",
@@ -1025,7 +1045,7 @@ export default{
                     {title: 'message', field:'message', tooltip:true},
                     {title: 'app', field: 'instance_id'},
                     {title: 'timestamp', field: 'timestamp'},
-                    {title: 'flag', field:'features[0].obj_value.error_flag',formatter:'tickCross'}
+                    {title: 'flag', field:'error_flag'}
                 ]
             })
         }
@@ -1218,19 +1238,28 @@ g.inactive path, g.active path{
   stroke: lightgrey;
   stroke-linecap:"round"
 }
-/* g.active path{
-  stroke:#0081af;
-} */
-g.active .expected_-1{
-    stroke: green;
+
+g.active .expected_-1{ 
+    stroke: #66bd63;
 }
 g.active .actual_-1{
-    stroke: red;
+    stroke: #d73027;
 }
+/* normal log embeddings not in the baseline result */
 g.active .logs_0{
-    stroke:#0081af;
+    stroke:#92c5de;
 }
+/* result generated by baseline model  */
 g.active .logs_1{
-    stroke: yellow;
+    stroke: #2166ac;
+}
+.feature .domain{
+    stroke: #BBBBBB;
+}
+.feature .tick line{
+    stroke: #BBBBBB;
+}
+.feature .tick text{
+    fill: #BBBBBB;
 }
 </style>
