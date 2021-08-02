@@ -1,6 +1,6 @@
 import { BIconDice3 } from 'bootstrap-vue';
 import uniqBy from 'lodash.uniqby';
-
+import {store} from '../../store/store.js'
 const filterOverlappingDrop = (xScale, dropDate) => d =>
     uniqBy(d.data, data => Math.round(xScale(dropDate(data))));
 // const filterOverlappingDrop = (xScale, dropDate) => d =>
@@ -22,7 +22,7 @@ export default (config, xScale,tym,d) => selection => {
             onMouseOut,
         },
     } = config;
-
+    // console.log(store)
     // tym.forEach(function(d){
     //     // uniqBy(d, function(d){
     //         return Math.round(xScale(dropDate(d)))
@@ -50,8 +50,10 @@ export default (config, xScale,tym,d) => selection => {
         .classed('drop', true)
         .on('click', function(d,i){
             // console.log(d,i)
+            // console.log(d,i)
+            // console.log(store.getters.SELECTED_APP)
             // console.log(d)
-            this.$store.commit('updateLOG_ID', i)
+            store.commit('updateLOG_ID', i)
         })
         .on('mouseover', function(d){
             d3.select(this).attr('r',dropHoverR)

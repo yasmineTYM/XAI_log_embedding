@@ -8,13 +8,14 @@ function initialState () {
     SCATTERPLOT:[],
     SELECTED_PROJECT: 'tsne',
     LOAD_B: false,
-    LOG_ID:null
+    LOG_ID:null,
   }
 }
 export const store = new Vuex.Store({
   strict: true,
   state: initialState,
   mutations: {
+  
     updateLOG_ID(state, newValue){
       state.LOG_ID = newValue
     },
@@ -43,5 +44,6 @@ export const store = new Vuex.Store({
     SCATTERPLOT: state => state.SCATTERPLOT,
     SELECTED_PROJECT: state => state.SELECTED_PROJECT,
     LOAD_B: state => state.LOAD_B,
+    LOG_ID: state => state.LOG_ID
   }
 })

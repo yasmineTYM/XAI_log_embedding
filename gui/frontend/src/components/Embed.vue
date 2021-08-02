@@ -72,10 +72,14 @@ export default{
     data(){
         return{
             lasso_selected: [],
-            applications: [
+            applications: [            
             {
                 value:'all',
                 label:'all'
+            },
+            {
+                value: "front-end",
+                label: "front-end"
             },
             {
                 value: 'carts',
@@ -90,6 +94,13 @@ export default{
                 value: 'orders',
                 label: 'orders'
             },{
+                value: 'orders-db',
+                label: 'orders-db'
+            },{
+                value: "payment",
+                label: "payment"
+            },
+            {
                 value:'shipping',
                 label:'shipping'
             },{
