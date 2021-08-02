@@ -98,6 +98,9 @@ export default{
             },{
                 value:'user-db',
                 label:'user-db'
+            },{
+                value:'user',
+                label:'user'
             }],
             projections:[{
                 'value': 'tsne',
@@ -107,7 +110,7 @@ export default{
                 'label':'UMAP'
             }], 
             // selected_event: 'count',
-            selected_app: 'all',
+            selected_app: 'carts',
             selected_project:'tsne',
             hexbin_radius_ratio:20,
             scatterplotData: null 

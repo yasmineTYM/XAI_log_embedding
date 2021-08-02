@@ -38,7 +38,7 @@
                 </el-timeline-item>
             </el-timeline> --> 
         </el-row>
-        <el-row > 
+        <el-row style="height:620px;"> 
             <el-col :span="19" style="height:620px;border-right:1px solid grey">
                 <div style="height:120px; width: 1053px;">
                     <div id="div_event" v-loading="LOAD_D"></div>
@@ -51,8 +51,10 @@
                 </div>
             </el-col>
             <el-col :span="5">
-                <div style="height:660px">
-                    <div id="div_log_detail"></div>
+                <div style="height:620px; width:290px">
+                    <div id="div_log_detail">
+                        <!-- <VueTabulator v-model="brushed_items" :options="options" /> -->
+                    </div>
                 </div>
             </el-col>
             
@@ -68,6 +70,9 @@ import axios from 'axios'
 import cloud from "d3-cloud"
 import * as d3Timeline from 'd3-timelines'
 import eventDrops from './src';
+// import  "vue-tabulator/dist/scss/bootstrap/tabulator_bootstrap4";
+import "tabulator-tables/dist/css/tabulator_simple.min.css"
+import Tabulator from 'tabulator-tables';
 // import EMBED_TEMPLATE from '../../static/log_embedding_template.json'
 // import '../src/style.css';
 // import { gravatar, humanizeDate } from './utils';
@@ -84,7 +89,10 @@ export default{
            embed_template:[],
            timeline:[],
            ulWidth: null,
-           div_width:1050
+           div_width:1110,
+           brushed_items: [],
+           baseline:[],
+           dim_s:[]
         }
     },
     
@@ -572,90 +580,83 @@ export default{
         },
         postLogline(data){
             console.log(data)
-            // this.$store.commit('sliceSCATTERPLOT')
+            var that = this
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
-            // ===========================1. append log embeddings ===========================
-            var log_embeddings = data['log_embeddings']
-            var id = 0
-            log_embeddings.forEach(function(d){
-                var result = {};
-                keys.forEach((key, i) => result[key] = d[i])
-                result['type']='logs'
-                result['player'] = id
-                coordinate_data.push(result)
-                id = id+1
-            })
-            // ===========================. append actual embeddings  ===========================
-            var result = {};
-            keys.forEach((key, i) => result[key] = data['actual_embeddings'][i])
-            result['type'] = 'actual'
-            result['player'] = id
-            id+=1
-            coordinate_data.push(result)
-            // ===========================. append expected embeddings  ===========================
-            var result = {};
-            var values = data['alert']['features'][0]['value']['log_anomaly_data']['embedding_expected']
-            keys.forEach((key, i) => result[key] = values[i])
-            result['player'] = id
-            result['type'] = 'expected'
-            coordinate_data.push(result)
-            
-            // var min = d3.min(all_number)
-            // var max = d3.max(all_number)
-            var features = []
-            keys.forEach(function(d){
-                let e = d3.extent(coordinate_data, p=>p[d])
-                features.push({
-                    'name': d,
-                    'range': e
+            // ================================= 
+            var test = "http://localhost:5000/baseLine"
+            var payload1 = {
+                'actual': data['actual_embeddings'],
+                'expected': data.alert.features[0].value.log_anomaly_data.embedding_expected,
+                'logs': data['log_embeddings']
+            }
+            axios.post(test, payload1)
+            .then((res)=>{
+                // console.log(res.data.dimension_sort)
+                // console.log(res.data.output)
+                that.baseline = res.data.output
+                that.dim_s = res.data.dimension_sort
+                // ===========================1. append log embeddings ===========================
+                var log_embeddings = data['log_embeddings']
+                var id = 0
+                log_embeddings.forEach(function(d, index){
+                    // console.log(that.baseline)
+                    var result = {};
+                    keys.forEach((key, i) => result[key] = d[i])
+                    result['type']='logs'
+                    result['player'] = id
+                    result['baseline'] = that.baseline[index]
+                    coordinate_data.push(result)
+                    id = id+1
                 })
+                // ===========================. append actual embeddings  ===========================
+                var result = {};
+                keys.forEach((key, i) => result[key] = data['actual_embeddings'][i])
+                result['type'] = 'actual'
+                result['player'] = id
+                result['baseline'] = -1
+                id+=1
+                coordinate_data.push(result)
+                // ===========================. append expected embeddings  ===========================
+                var result = {};
+                var values = data['alert']['features'][0]['value']['log_anomaly_data']['embedding_expected']
+                keys.forEach((key, i) => result[key] = values[i])
+                result['player'] = id
+                result['type'] = 'expected'
+                result['baseline'] = -1
+                coordinate_data.push(result)
+                
+                // var min = d3.min(all_number)
+                // var max = d3.max(all_number)
+                var features = []
+                keys.forEach(function(d){
+                    let e = d3.extent(coordinate_data, p=>p[d])
+                    features.push({
+                        'name': d,
+                        'range': e
+                    })
+                })
+                data['eventdrops'].sort(function(a,b) {return (a.date > b.date) ? 1 : ((b.date > a.date) ? -1 : 0);} );
+
+                this.eventdrops = data['eventdrops']
+
+                let copy_eventdrops = []
+                data['eventdrops'].forEach(function(d){
+                    copy_eventdrops.push(d)
+                })
+
+                this.drawCoordinate(copy_eventdrops,coordinate_data, keys, features)
+                
+                this.drawEventDrop(null)
             })
-            // console.log(features)
-            // console.log(d3.extent(coordinate_data, d=>d.dim1))
-            // console.log(coordinate_data, min,max);
-            //prepare data for coordinates
-
-            data['eventdrops'].sort(function(a,b) {return (a.date > b.date) ? 1 : ((b.date > a.date) ? -1 : 0);} );
-
-            this.eventdrops = data['eventdrops']
-
-            let copy_eventdrops = []
-            data['eventdrops'].forEach(function(d){
-                copy_eventdrops.push(d)
+            .catch((error)=>{
+                console.log(error)
             })
-            this.drawCoordinate(copy_eventdrops,coordinate_data, keys, features)
-            
-            this.drawEventDrop(null)
-            
-            // console.log(data)
-            // if(this.SELECTED_PROJECT=='tsne'){
-            //     var temp={
-            //         'anomaly_label':1,
-            //         'app': this.SELECTED_APP,
-            //         'embedding_ids':'',
-            //         'error_flag':'',
-            //         'highlight':1,
-            //         'template_ids':'',
-            //         'x': data['tsne_x'],
-            //         'y': data['tsne_y']
-            //     }
-            //     this.$store.commit('pushSCATTERPLOT', temp)
-            // }else if(this.SELECTED_PROJECT=='umap'){
-            //     var temp={
-            //         'anomaly_label':1,
-            //         'app': this.SELECTED_APP,
-            //         'embedding_ids':'',
-            //         'error_flag':'',
-            //         'highlight':1,
-            //         'template_ids':'',
-            //         'x': data['umap_x'],
-            //         'y': data['umap_y']
-            //     }
-            //     this.$store.commit('pushSCATTERPLOT', temp)
-            // }
+            // console.log(that.baseline)
             // ================================== update scatterplot 
+            
             this.$store.commit('updateLOAD_B', true)
+            this.$store.commit('sliceSCATTERPLOT')
             this.LOAD_D = true
             const path = "http://localhost:5000/postLogline"
             const payload = {
@@ -667,7 +668,7 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                console.log(res.data)
+                // console.log(res.data)
                 this.$store.commit('updateLOAD_B', false)
                 this.LOAD_D = false
                 this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
@@ -709,6 +710,7 @@ export default{
             /*
             * Parameters
             *****************************/
+        //    console.log(data)
             const  padding = 28, brush_width = 20;
             const filters = {};
             var margin = {top: 30, right: 5, bottom: 10, left: 30},
@@ -726,7 +728,7 @@ export default{
             // Each vertical scale
             const yScales = {};
             features.map(x=>{
-                console.log(x.name)
+                // console.log(x.name)
             yScales[x.name] = d3.scaleLinear()
                 .domain(x.range)
                 .range([height-padding, padding]);
@@ -739,38 +741,56 @@ export default{
 
             // Each brush generator
             const brushEventHandler = function(feature){
-            if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") 
-                return; // ignore brush-by-zoom
-            if(d3.event.selection != null){
-                filters[feature] = d3.event.selection.map(d=>yScales[feature].invert(d));
-            }else{
-                if(feature in filters)
-                delete(filters[feature]);
+                if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") 
+                    return; // ignore brush-by-zoom
+                if(d3.event.selection != null){
+                    filters[feature] = d3.event.selection.map(d=>yScales[feature].invert(d));
+                }else{
+                    if(feature in filters)
+                    delete(filters[feature]);
+                }
+                applyFilters();
             }
-            applyFilters();
-            }
-
+            var that = this
             const applyFilters = function(){
-            d3.select('g.active').selectAll('path')
-                .style('display', d=>(selected(d)?null:'none'));
+                // that.brushed_items = []
+                d3.select('g.active').selectAll('path')
+                .style('display', function(d,i){
+                    
+                    if(selected(d)){
+                        // console.log('yes')
+                        if(i<raw.length){
+                            that.brushed_items.push(raw[i])
+                        }
+                        return null
+                    }else{
+                        // console.log('no')
+                        return 'none'
+                    }
+                })
+                    // .style('display', d=>(selected(d)?null:'none'));
             }
                     
             const selected = function(d){
-            const _filters = d3.entries(filters);
-            return _filters.every(f=>{
-                return f.value[1] <= d[f.key] && d[f.key] <= f.value[0];
-            });
+                const _filters = d3.entries(filters);
+                return _filters.every(f=>{
+                    return f.value[1] <= d[f.key] && d[f.key] <= f.value[0];
+                });
             }
 
             const yBrushes = {};
             d3.entries(yScales).map(x=>{
-            let extent = [
-                [-(brush_width/2), padding],
-                [brush_width/2, height-padding]
+                let extent = [
+                    [-(brush_width/2), padding],
+                    [brush_width/2, height-padding]
             ];
+            function test(){
+                that.brushed_items = []
+            }
             yBrushes[x.key]= d3.brushY()
                 .extent(extent)
-                .on('brush', ()=>brushEventHandler(x.key))
+                .on('start',()=>test(x.key))
+                // .on('brush', ()=>brushEventHandler(x.key))
                 .on('end', ()=>brushEventHandler(x.key));
             });
 
@@ -778,7 +798,7 @@ export default{
             const lineGenerator = d3.line();
 
             const linePath = function(d){
-                const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type'));
+                const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type' & x.key!='baseline'));
                 let points = _data.map(x=>([xScale(x.key),yScales[x.key](x.value)]));
                     return(lineGenerator(points));
             }
@@ -798,13 +818,15 @@ export default{
                 .data(data)
                 .enter()
                 .append('path')
+                .attr('class', function(d){return d['type']})
                 .attr('d', d=>linePath(d));
 
-            // Inactive data
+            // active data
             pcSvg.append('g').attr('class','active').selectAll('path')
                 .data(data)
                 .enter()
                 .append('path')
+                .attr('class', function(d){return d['type']+'_'+d['baseline'].toString()})
                 .attr('d', d=>linePath(d));
 
             // Vertical axis for the features
@@ -953,7 +975,28 @@ export default{
             .catch((error)=>{
                 console.log(error)
             })
+        },
+        drawTable(){
+            var that = this
+            console.log(that.brushed_items)
+            var table = new Tabulator("#div_log_detail", {
+                data: that.brushed_items,
+                height:'620px',
+                // width: '270px',
+                layout: "fitColumns",
+                pagination:"local",
+                paginationSize:6,
+                paginationSizeSelector:[3, 6, 8, 10],
+                movableColumns:true,
+                columns:[
+                    {title: 'message', field:'message', tooltip:true},
+                    {title: 'app', field: 'instance_id'},
+                    {title: 'timestamp', field: 'timestamp'},
+                    {title: 'flag', field:'features[0].obj_value.error_flag',formatter:'tickCross'}
+                ]
+            })
         }
+
     },
     watch:{
         show_tree(){
@@ -974,6 +1017,10 @@ export default{
         },
         LOG_ID(){
             console.log(this.LOG_ID)
+        },
+        brushed_items(){
+            console.log(this.brushed_items)
+            this.drawTable()
         }
 
     },
@@ -1031,20 +1078,6 @@ export default{
 .el-timeline-item__tail{
     border-left: 2px solid #D6D2C4
 }
-
-.abnormal .el-timeline-item__node{
-    background-color: #CC7351
-}
-.normal .el-timeline-item__node{
-    background-color: #9DAB86
-}
-.both .el-timeline-item__node{
-    background-color: #CC7351
-}
-.unknown .el-timeline-item__node{
-    background-color: #CC7351
-}
-
 .el-card__body{
     height:200px;
     padding:0px;
@@ -1098,12 +1131,12 @@ ul{
   box-sizing: border-box;
   border-radius: 50%;
 }
-.both{
+.uncertain{
   width:10px;
   height: 10px;
-  color: red;
+  color: orange;
   font-size: 18;
-  background: red;
+  background: orange;
   box-sizing: border-box;
   border-radius: 50%;
 }
@@ -1152,8 +1185,19 @@ g.inactive path, g.active path{
   stroke: lightgrey;
   stroke-linecap:"round"
 }
-g.active path{
+/* g.active path{
   stroke:#0081af;
+} */
+g.active .expected_-1{
+    stroke: green;
 }
-
+g.active .actual_-1{
+    stroke: red;
+}
+g.active .logs_0{
+    stroke:#0081af;
+}
+g.active .logs_1{
+    stroke: yellow;
+}
 </style>

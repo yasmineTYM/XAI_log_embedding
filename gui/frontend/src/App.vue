@@ -8,10 +8,10 @@
          <Tree/>
       </el-row> -->
       <el-row style="height:980px;">
-        <el-col :span="6">
+        <el-col :span="5">
           <Embed/>
         </el-col>
-        <el-col :span="18">
+        <el-col :span="19">
           <Tree/>
         </el-col>
       </el-row>

@@ -222,7 +222,7 @@ def postEmbedding():
 @app.route('/getTree', methods=['GET'])
 def getTree():
     data = []
-    with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
+    with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/round1.json') as f:
         for line in f:
             temp = json.loads(line)
             data.append(temp)
@@ -233,12 +233,12 @@ def postTree():
     data = []
     app = request.get_json()['app']
     if app=='all':
-        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/round1.json') as f:
             for line in f:
                 temp = json.loads(line)
                 data.append(temp)
     else:
-        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/cpu_hog.json') as f:
+        with open('../../../../Data/gui/timeline/fault_tree_scatterplot_eventdrops_lime/round1.json') as f:
             for line in f:
                 temp = json.loads(line)
                 this_app = temp['alert']['features'][0]['value']['log_anomaly_data']['source_application_id']
@@ -357,5 +357,41 @@ def getTemplate():
     data = pd.read_json('../../../../Data/XAI/baseline/log_embedding_template.json', lines=True)
 
     return jsonify(data.to_dict('records'))
+
+@app.route('/baseLine', methods = ['POST'])
+def baseLine():
+    input_embedding = request.get_json()['actual']
+    expected_embedding = request.get_json()['expected']
+    log_embeddings = np.array(request.get_json()['logs'])
+
+    ## input - expected 
+    substraction_embdding = np.subtract(input_embedding,expected_embedding)
+    ## get the largest k dimensions 
+    abs_embedding = np.absolute(substraction_embdding)
+    k_dimensions = abs_embedding.argsort()[-3:][::-1]
+    dimensions_sort = abs_embedding.argsort()[-20:][::-1].tolist()
+    dimensions_sort_dict = {}
+    for i in range(len(dimensions_sort)):
+        dimensions_sort_dict[dimensions_sort[i]] = i
+    log_indicator = []
+    for dim in k_dimensions:
+        # iv > ev 
+        if input_embedding[dim]-expected_embedding[dim]>0:
+            output = log_embeddings[log_embeddings[:, dim]>=input_embedding[dim]]
+        else:
+            output = log_embeddings[log_embeddings[:, dim]<=input_embedding[dim]]
+        # print(type(output)) 
+    # print(output)
+    output = np.unique(output, axis=0).tolist()
+    # print(output)
+    for i in log_embeddings.tolist():
+        if i in output:
+            log_indicator.append(1)
+        else:
+            log_indicator.append(0)       
+    return jsonify({
+        'dimension_sort': dimensions_sort_dict,
+        'output': log_indicator
+    })
 if __name__ == '__main__':
     app.run()
