@@ -370,9 +370,12 @@ def baseLine():
     abs_embedding = np.absolute(substraction_embdding)
     k_dimensions = abs_embedding.argsort()[-3:][::-1]
     dimensions_sort = abs_embedding.argsort()[-20:][::-1].tolist()
-    dimensions_sort_dict = {}
+    dimensions_sort_list = []
     for i in range(len(dimensions_sort)):
-        dimensions_sort_dict[dimensions_sort[i]] = i
+        dimensions_sort_list.append({
+            'dim':dimensions_sort[i],
+            'value': len(dimensions_sort)-i
+        })
     log_indicator = []
     for dim in k_dimensions:
         # iv > ev 
@@ -390,7 +393,7 @@ def baseLine():
         else:
             log_indicator.append(0)       
     return jsonify({
-        'dimension_sort': dimensions_sort_dict,
+        'dimension_sort': dimensions_sort_list,
         'output': log_indicator
     })
 if __name__ == '__main__':

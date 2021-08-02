@@ -579,7 +579,7 @@ export default{
             that.show_tree = true
         },
         postLogline(data){
-            console.log(data)
+            // console.log(data)
             var that = this
             var coordinate_data = []
             var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
@@ -592,7 +592,7 @@ export default{
             }
             axios.post(test, payload1)
             .then((res)=>{
-                // console.log(res.data.dimension_sort)
+                console.log(res.data.dimension_sort)
                 // console.log(res.data.output)
                 that.baseline = res.data.output
                 that.dim_s = res.data.dimension_sort
@@ -606,6 +606,7 @@ export default{
                     result['type']='logs'
                     result['player'] = id
                     result['baseline'] = that.baseline[index]
+                    // result['dimension'] = that.dim_s[index-1]
                     coordinate_data.push(result)
                     id = id+1
                 })
@@ -615,6 +616,7 @@ export default{
                 result['type'] = 'actual'
                 result['player'] = id
                 result['baseline'] = -1
+                // result['dimension'] = 0
                 id+=1
                 coordinate_data.push(result)
                 // ===========================. append expected embeddings  ===========================
@@ -624,6 +626,7 @@ export default{
                 result['player'] = id
                 result['type'] = 'expected'
                 result['baseline'] = -1
+                // result['dimension'] = 0
                 coordinate_data.push(result)
                 
                 // var min = d3.min(all_number)
@@ -645,7 +648,7 @@ export default{
                     copy_eventdrops.push(d)
                 })
 
-                this.drawCoordinate(copy_eventdrops,coordinate_data, keys, features)
+                this.drawCoordinate(copy_eventdrops,coordinate_data, features,that.dim_s)
                 
                 this.drawEventDrop(null)
             })
@@ -706,16 +709,20 @@ export default{
                 .data([repositoriesData])
                 .call(chart);
         },
-        drawCoordinate(raw,data,dimensions, features){
+        drawCoordinate(raw,data, features, dimension){
             /*
             * Parameters
             *****************************/
-        //    console.log(data)
+           console.log(data)
             const  padding = 28, brush_width = 20;
             const filters = {};
             var margin = {top: 30, right: 5, bottom: 10, left: 30},
             width = this.div_width - margin.left - margin.right,
             height = 220 - margin.top - margin.bottom;
+
+
+           
+
 
             /*
             * Helper functions
@@ -798,7 +805,7 @@ export default{
             const lineGenerator = d3.line();
 
             const linePath = function(d){
-                const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type' & x.key!='baseline'));
+                const _data = d3.entries(d).filter(x=>(x.key!='player' & x.key!='type' & x.key!='baseline' ));
                 let points = _data.map(x=>([xScale(x.key),yScales[x.key](x.value)]));
                     return(lineGenerator(points));
             }
@@ -856,6 +863,32 @@ export default{
             .attr("text-anchor", "middle")
             .attr('y', padding/2)
             .text(d=>d.name);
+
+
+            var dim_x = d3.scaleband()
+            .domain(Object.keys(dimension))
+            .range([padding, width-padding])
+
+            var dim_y = d3.scaleLinear()
+            .domain([0, dimension.length])
+            .range([50,0])
+
+            var line_data = []
+            dimension.forEach(function(d){
+                line_data.push({
+                    'x': dim_x(d['dim']),
+                    'y': dim_y(d['value'])
+                })
+            })
+            var lineGenerator = d3.line()
+            .curve(d3.curveCardinal)
+            .x(d=>d.x)
+            .y(d=>d.y)
+
+            var path = svg.append('path')
+            .attr('d', lineGenerator(line_data))
+            .style('fill', 'white')
+            .style('stroke','black')
         },
      
         drawLIME(data){
