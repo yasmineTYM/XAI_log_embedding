@@ -33,16 +33,6 @@
                     </div>
                 </div>
             </div>
-            <!-- <el-timeline>
-                <el-timeline-item v-for="(activity, index) in tree_items" :timestamp="activity.utc_timestamp" placement="top" :class="activity.abnormal_flag">
-                    <el-card shadow="hover">
-                        <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
-                        <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>
-                        <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
-                        <div :id="activity.div_id"></div>
-                    </el-card>
-                </el-timeline-item>
-            </el-timeline> --> 
         </el-row>
         <el-row style="height:620px;"> 
             <el-col :span="19" style="height:620px;border-right:1px solid grey">
