@@ -43,12 +43,21 @@
                 <div style="height:120px; width: 1053px;">
                     <div id="div_event" v-loading="LOAD_D"></div>
                 </div>
-                <div style="height:220px; width: 1053px;">
-                    <div id="div_embed"></div>
-                </div>
-                <div style="height:320px; width: 1053px;">
-                    <div id="div_lime"></div>
-                </div>
+                <el-tabs v-model="activeName">
+                    <el-tab-pane label="Baseline" name="first">
+                        <div style="height:220px; width: 1053px;">
+                            <div id="div_embed"></div>
+                        </div>
+                        <div style="height:220px; width: 1053px;">
+                            <div id="div_ref"></div>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="LIME" name="second">
+                        <div style="height:320px; width: 1053px;">
+                            <div id="div_lime"></div>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
             </el-col>
             <el-col :span="5">
                 <div style="height:620px; width:290px">
@@ -92,7 +101,8 @@ export default{
            div_width:1110,
            brushed_items: [],
            baseline:[],
-           dim_s:[]
+           dim_s:[],
+           activeName: 'first'
         }
     },
     
@@ -592,13 +602,14 @@ export default{
             }
             axios.post(test, payload1)
             .then((res)=>{
-                console.log(res.data.dimension_sort)
+                // console.log(res.data.dimension_sort)
                 // console.log(res.data.output)
                 that.baseline = res.data.output
                 that.dim_s = res.data.dimension_sort
                 // ===========================1. append log embeddings ===========================
                 var log_embeddings = data['log_embeddings']
                 var id = 0
+                
                 log_embeddings.forEach(function(d, index){
                     // console.log(that.baseline)
                     var result = {};
@@ -648,13 +659,49 @@ export default{
                     copy_eventdrops.push(d)
                 })
 
-                this.drawCoordinate(copy_eventdrops,coordinate_data, features,that.dim_s)
+                this.drawCoordinate(copy_eventdrops,coordinate_data, features,that.dim_s, false,'#div_embed')
                 
                 this.drawEventDrop(null)
             })
             .catch((error)=>{
                 console.log(error)
             })
+
+            var path_1 = "http://localhost:5000/findRef"
+            var payload_1 = {
+                'scatterplot': this.SCATTERPLOT,
+                'window_embedding':data['actual_embeddings']
+            }
+            axios.post(path_1, payload_1)
+            .then((res)=>{
+                var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
+                var coordinate_data = []
+                var id = 0
+                res.data['log_embeddings'].forEach(function(d, index){
+                    // console.log(that.baseline)
+                    var result = {};
+                    keys.forEach((key, i) => result[key] = d[i])
+                    result['type']='logs'
+                    result['player'] = id
+                    result['baseline'] = 0
+                    // result['dimension'] = that.dim_s[index-1]
+                    coordinate_data.push(result)
+                    id = id+1
+                })
+                var features = []
+                keys.forEach(function(d){
+                    let e = d3.extent(coordinate_data, p=>p[d])
+                    features.push({
+                        'name': d,
+                        'range': e
+                    })
+                })
+                this.drawCoordinate(res.data['raw'],coordinate_data, features,[],true,'#div_ref')
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
+
             // console.log(that.baseline)
             // ================================== update scatterplot 
             
@@ -671,7 +718,7 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                // console.log(res.data)
+                // console.log(typeof(res.data['scatterplot']))
                 this.$store.commit('updateLOAD_B', false)
                 this.LOAD_D = false
                 this.$store.commit('updateSCATTERPLOT', res.data['scatterplot'])
@@ -709,16 +756,16 @@ export default{
                 .data([repositoriesData])
                 .call(chart);
         },
-        drawCoordinate(raw,data, features, dimension){
+        drawCoordinate(raw,data, features, dimension, ref, div_name){
             /*
             * Parameters
             *****************************/
         //    console.log(data)
             const  padding = 38, brush_width = 20;
             const filters = {};
-            var margin = {top: 30, right: 5, bottom: 10, left: 30},
+            var margin = {top: 30, right: 5, bottom: 0, left: 30},
             width = this.div_width - margin.left - margin.right,
-            height = 220 - margin.top - margin.bottom;
+            height = 190 - margin.top - margin.bottom;
 
             /*
             * Helper functions
@@ -734,7 +781,7 @@ export default{
                 // console.log(x.name)
             yScales[x.name] = d3.scaleLinear()
                 .domain(x.range)
-                .range([height-padding, padding]);
+                .range([height, padding]);
             });
             // Each axis generator
             const yAxis = {};
@@ -757,23 +804,26 @@ export default{
             var that = this
             const applyFilters = function(){
                 // that.brushed_items = []
-                d3.select('g.active').selectAll('path')
+                d3.select(div_name).select('g.active').selectAll('path')
                 .style('display', function(d,i){
-                    
                     if(selected(d)){
                         // console.log('yes')
-                        if(i<raw.length){
+                        if(i<raw.length && ref==false){
+                            that.brushed_items.push({
+                                'message':raw[i]['message'],
+                                'instance_id': raw[i]['instance_id'],
+                                'timestamp': raw[i]['timestamp'],
+                                'error_flag': raw[i]['features'][0]['obj_value']['error_flag']
+                            })
+                        }else if(i<raw.length && ref==true){
                             that.brushed_items.push(raw[i])
                         }
                         return null
                     }else{
-                        // console.log('no')
                         return 'none'
                     }
                 })
-                    // .style('display', d=>(selected(d)?null:'none'));
-            }
-                    
+            }       
             const selected = function(d){
                 const _filters = d3.entries(filters);
                 return _filters.every(f=>{
@@ -809,9 +859,9 @@ export default{
             /*
             * Parallel Coordinates
             *****************************/
-            d3.select('#div_embed').html('')
+            d3.select(div_name).html('')
             // Main svg container
-            const pcSvg = d3.select('#div_embed')
+            const pcSvg = d3.select(div_name)
             .append('svg')
             .attr('width', width)
             .attr('height', height);
@@ -861,44 +911,46 @@ export default{
             // .attr('y', padding/2)
             // .text(d=>d.name);
 
+            if(ref==false){
+                 var dim_x = d3.scalePoint()
+                .domain(Object.keys(dimension))
+                .range([padding, width-padding])
 
-            var dim_x = d3.scalePoint()
-            .domain(Object.keys(dimension))
-            .range([padding, width-padding])
+                
+                var dim_y = d3.scaleLinear()
+                .domain([0, dimension.length])
+                .range([30,0])
 
-            
-            var dim_y = d3.scaleLinear()
-            .domain([0, dimension.length])
-            .range([30,0])
-
-            var line_data = []
-            dimension.forEach(function(d){
-                line_data.push({
-                    'x': dim_x(d['dim']),
-                    'y': dim_y(d['value'])
+                var line_data = []
+                dimension.forEach(function(d){
+                    line_data.push({
+                        'x': dim_x(d['dim']),
+                        'y': dim_y(d['value'])
+                    })
                 })
-            })
-            // console.log(line_data)
-            var lineGenerator_dim = d3.line()
-            .curve(d3.curveStepAfter)
-            .x(d=>d.x)
-            .y(d=>d.y)
+                // console.log(line_data)
+                var lineGenerator_dim = d3.line()
+                .curve(d3.curveStepAfter)
+                .x(d=>d.x)
+                .y(d=>d.y)
 
-            var path = pcSvg.append('path')
-            .attr('d', lineGenerator_dim(line_data))
-            .style('fill', 'white')
-            .style('stroke-width','3px')
-            .style('stroke','#D79771')
+                var path = pcSvg.append('path')
+                .attr('d', lineGenerator_dim(line_data))
+                .style('fill', 'white')
+                .style('stroke-width','3px')
+                .style('stroke','#D79771')
 
-             // Add the scatterplot
-            var dots = pcSvg.selectAll("dot")
-            .data(line_data)
-            .enter().append("circle")
-            .style('opacity',1)
-            .style('fill','#B05B3B')
-            .attr("r", 4)
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; });
+                // Add the scatterplot
+                var dots = pcSvg.selectAll("dot")
+                .data(line_data)
+                .enter().append("circle")
+                .style('opacity',1)
+                .style('fill','#B05B3B')
+                .attr("r", 4)
+                .attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+            }
+            
 
         },
      
@@ -1022,18 +1074,8 @@ export default{
         },
         drawTable(){
             var that = this
-            console.log(that.brushed_items)
-            var tableData = []
-            that.brushed_items.forEach(function(d){
-                tableData.push({
-                    'message': d['message'],
-                    'instance_id': d['instance_id'],
-                    'timestamp': d['timestamp'],
-                    'error_flag': d['features'][0]['obj_value']['error_flag']
-                })
-            })
             var table = new Tabulator("#div_log_detail", {
-                data: tableData,
+                data: that.brushed_items,
                 height:'620px',
                 // width: '270px',
                 layout: "fitColumns",

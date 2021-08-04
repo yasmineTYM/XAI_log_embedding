@@ -68,6 +68,7 @@ import * as d3 from 'd3'
 import axios from 'axios'
 import * as d3Lasso from "d3-lasso"
 import * as d3Hexbin from 'd3-hexbin'
+import MAP from '../../../../../../Data/gui/heatmap/mapping.json'
 export default{
     data(){
         return{
@@ -159,26 +160,85 @@ export default{
             axios.post(path, payload)
             .then((res)=>{
                 console.log(res.data)
-                this.draw_heatmap(180,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
-                this.draw_heatmap(180,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
-                this.draw_heatmap(180,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], res.data['x_embedding'], res.data['y_values'])
+                this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
+                this.draw_heatmap(180,210,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
+                this.draw_heatmap(180,210,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], res.data['x_embedding'], res.data['y_values'])
                 // this.draw_heatmap(500,'Sequence of Error Flag','#div_heatmap_sequence_error', res.data['sequence_error'], res.data['sequence_x'], res.data['y_values'])
+                this.draw_Link(res.data['x_template'], res.data['x_embedding'])
             })
         },
-        draw_heatmap(size,Title,div_id,DATA,myGroups,myVars){
+        draw_Link(tem_data, embed_data){
+            var computed_mapping = []
+            tem_data.forEach(function(tem){
+                var candidates = MAP[tem]
+                candidates.forEach(function(ele){
+                    if(embed_data.includes(ele)){
+                        computed_mapping.push({
+                            'source': tem,
+                            'target': ele
+                        })
+                    }
+                })
+            })
+            var margin = {top: 0, right: 10, bottom: 50, left: 50},
+            width_tem = d3.max([400,tem_data.length*20]) - margin.left - margin.right,
+            width_embed = d3.max([400,embed_data.length*20]) - margin.left - margin.right
+            
+            var x_tem = d3.scaleBand()
+            .range([ 0, width_tem ])
+            .domain(tem_data)
+            .padding(0.01);
+
+            var x_embed = d3.scaleBand()
+            .range([0, width_embed])
+            .domain(embed_data)
+            .padding(0.01);
+
+            var paths = []
+            computed_mapping.forEach(function(d){
+                var temp = []
+                temp.push({
+                    'x':x_tem(d['source'])+margin.left+x_tem.bandwidth()/2,
+                    'y':200
+                })
+                temp.push({
+                    'x':x_embed(d['target'])+margin.left+x_embed.bandwidth()/2,
+                    'y':500
+                })
+                paths.push(temp)
+            })
+
+            console.log(paths)
+            var line = d3.line()
+            .curve(d3.curveBasis)
+            .x(d=>d.x)
+            .y(d=>d.y)
+
+            d3.select('#div_heatmap_count_template svg')
+            .selectAll('.line_mapping')
+            .data(paths)
+            .enter()
+            .append('path')
+            .attr('d', line)
+            .style('stroke', 'red')
+            .style('stroke-width','5px')
+
+
+        },
+        draw_heatmap(size,h,Title,div_id,DATA,myGroups,myVars){
             // var DATA = RAW['heatmapdata']
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
-            var margin = {top: 30, right: 10, bottom: 50, left: 50},
+            var margin = {top: 30, right: 10, bottom: 20, left: 50},
             width = d3.max([400,myGroups.length*20]) - margin.left - margin.right,
-            height = 210 - margin.top - margin.bottom;
+            height = h - margin.top - margin.bottom;
             // append the svg object to the body of the page
             var svg = d3.select(div_id)
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
-            .attr("id", div_id)
+            // .attr("id", div_id)
             .attr("transform","translate(" + margin.left + "," + margin.top + ")");
             
             svg.append('g')

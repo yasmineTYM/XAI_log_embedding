@@ -10,6 +10,7 @@ import random
 from scipy.spatial import distance
 import umap 
 from sklearn.manifold import TSNE
+from scipy.spatial import distance
 DEBUG = True
 
 # instantiate the app
@@ -48,7 +49,7 @@ def postScatter():
     
     # data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
     data = pd.read_csv('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/'+project+'.csv')
-    print(type(data))
+    print(data.columns)
     data['highlight'] = list(np.zeros(len(data)))
     if application =='all':
         # data = data.to_dict(orient="records")
@@ -301,46 +302,12 @@ def postLogline():
         'error_flag': '',
         'highlight':1,
         'template_ids':'',
+        'log_embeddings':'',
+        'log_original': '',
         'x': X_embedded[-1,0],
         'y': X_embedded[-1,1]
     }
     scatterplot_pd = scatterplot_pd.append(temp, ignore_index = True)
-    # temp1 = list(scatterplot_pd['anomaly_label'].tolist())
-    # temp1.append(0)
-
-    # temp2 = list(scatterplot_pd['anomaly_label'].tolist())
-    # temp2.append(request.get_json()['app'])
-
-    # temp3 = list(scatterplot_pd['embedding_ids'].tolist())
-    # temp3.append('')
-
-    # temp4 = list(scatterplot_pd['error_flag'].tolist())
-    # temp4.append('')
-
-    # temp5 = list(scatterplot_pd['highlight'].tolist())
-    # temp5.append(1)
-
-    # temp6 = list(scatterplot_pd['template_ids'].tolist())
-    # temp6.append('')
-    # temp7 = list(scatterplot_pd['embeddings'].tolist())
-    # temp7.append(new_embedding)
-    # temp8 = list(scatterplot_pd['x'].tolist())
-    # temp8.append(X_embedded[-1,0])
-    # temp9 = list(scatterplot_pd['y'].tolist())
-    # temp9.append(X_embedded[-1,1])
-
-    # # print(X_embedded[-1,0],X_embedded[-1,1])
-    # scatterplot_output = pd.DataFrame({
-    #     'x': temp8,
-    #     'y': temp9,
-    #     'anomaly_label': temp1,
-    #     'app': temp2,
-    #     'embedding_ids':temp3,
-    #     'embeddings': temp7,
-    #     'error_flag': temp4,
-    #     'highlight':temp5,
-    #     'template_ids':temp6,
-    # })
     return jsonify({
         # 'panel_d':filtered.to_dict('records'),
         'scatterplot': scatterplot_pd.to_dict('records')
@@ -351,7 +318,34 @@ def postLogline():
         # }
     })
 
+@app.route('/findRef', methods=['POST'])
+def findRef():
+    scatterplot = request.get_json()['scatterplot']
+    scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
+    
 
+    ## get windowed embeddings, find the closet window embedding from the reference windows     
+    new_embedding = request.get_json()['window_embedding']
+    distance_list=[]
+    
+    for ele in scatterplot_pd['embeddings'].tolist():
+        try:
+            temp = ast.literal_eval(ele)
+            d = distance.euclidean(temp, new_embedding)
+            distance_list.append(d)
+        except:
+            print('error')
+    min_index = distance_list.index(min(distance_list))
+    
+    ## get the log embeddings of the min_index
+    log_embeddings = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_embeddings'])
+    log_errors = ast.literal_eval(scatterplot_pd.loc[min_index]['log_original'])
+    
+    
+    return jsonify({
+        'log_embeddings': log_embeddings,
+        'raw': log_errors
+    })
 @app.route('/getTemplate', methods=['GET'])
 def getTemplate():
     data = pd.read_json('../../../../Data/XAI/baseline/log_embedding_template.json', lines=True)
