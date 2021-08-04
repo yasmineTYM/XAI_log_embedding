@@ -1,6 +1,12 @@
 <template>
     <div>
-        <el-row class="scatter_row"></el-row>
+        <el-row class="scatter_row">
+            <el-switch
+            v-model="switch_value"
+            active-color="#13ce66"
+            inactive-color="#ff4949">
+            </el-switch>
+        </el-row>
         <el-row style="overflow-x:scroll;height:321px;border-bottom:1px solid grey" class="timeLine">
             <div id="div_timeline"></div>
             <div class="app-container" v-if="show_tree">
@@ -89,6 +95,7 @@ import Tabulator from 'tabulator-tables';
 export default{
     data(){
         return{
+            switch_value: false, // controling for the timeline card size, 
            text_detail:'ttt',
            tree_items: null,
            show_tree: false,
@@ -1116,6 +1123,9 @@ export default{
         brushed_items(){
             console.log(this.brushed_items)
             this.drawTable()
+        },
+        switch_value(){
+            console.log(this.switch_value)
         }
 
     },
@@ -1147,6 +1157,7 @@ export default{
         LOG_ID(){
             return this.$store.getters.LOG_ID
         }
+
     }
 }
 </script>
