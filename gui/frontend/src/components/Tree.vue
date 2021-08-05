@@ -8,18 +8,19 @@
                 <div class="timeLine" style="overflow: scroll;">
                     <div class="ul_box" :style="{ width: ulWidth + 'px' }">
                         <ul class="my_timeline" ref="mytimeline" style="margin-left: 10px;">
-                            <li class="my_timeline_item" v-for="(activity,index) in tree_items" :key="index">
+                            <li class="my_timeline_item" v-for="(activity,index) in tree_items" :key="index" :id="liId(activity.div_id)">
                                 <!--圈圈节点-->
-                                <span>{{activity.utc_timestamp}}</span>
+                                <span :id="spanId(activity.div_id)">{{activity.utc_timestamp}}</span>
                                 <div class="my_timeline_node" :class="activity.abnormal_flag" :style="{'position':index===tree_items.length-1?'relative':'', 'top':index===tree_items.length-1?'-4px':''}"></div>
                                 <!--线-->
-                                <div class="my_timeline_item_line" v-if="index !== tree_items.length-1"></div>
+                                <div class="my_timeline_item_line" v-if="index !== tree_items.length-1" :id="lineId(activity.div_id)"></div>
                                 <!--标注-->
                                 <div class="my_timeline_item_content">
-                                    <el-card shadow="hover">
-                                        <span class="timeline_detail">severity: {{activity.alert.severity}}<br></span>
-                                        <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>
-                                        <el-button style="float: right; padding: 3px 0" type="text" @click="postLogline(activity)">Select</el-button>
+                                    <el-card shadow="hover" :id="cardId(activity.div_id)">
+                                        <span class="timeline_detail">severity: {{activity.alert.severity}}</span>
+                                        <el-button type="text" @click="drawDetail(activity.div_id, activity.alert.features[0]['value']['log_anomaly_data']['text_dict'])">Detail</el-button><br>
+                                        <span class="timeline_detail">confidence: {{activity.alert.features[0]['value']['log_anomaly_data']['log_anomaly_confidence']}}</span>            
+                                        <el-button type="text" @click="postLogline(activity)">Select</el-button>
                                         <div :id="activity.div_id"></div>
                                     </el-card>
                                 </div>
@@ -80,6 +81,7 @@ import Tabulator from 'tabulator-tables';
 export default{
     data(){
         return{
+            card_width:180, //timeline, card width
            text_detail:'ttt',
            tree_items: null,
            show_tree: false,
@@ -88,7 +90,6 @@ export default{
            eventdrops:[],
            embed_template:[],
            timeline:[],
-           ulWidth: null,
            div_width:1110,
            brushed_items: [],
            baseline:[],
@@ -105,7 +106,29 @@ export default{
 
     },
     methods: {
+        lineId(id){
+            return 'line_'+id
+        },
+        cardId(id){
+            return 'card_'+id
+        },
+        liId(id){
+            return 'li_'+id
+        },
+        spanId(id){
+            return 'span_'+id
+        },
         drawDetail(div_id, raw){
+            let s = d3.select('#'+div_id)
+            let li = d3.select("#li_"+div_id)
+            li.style('width','300px')
+
+            let line = d3.select('#line_'+div_id)
+            line.style('width','300px')
+
+            let card = d3.select('#card_'+div_id)
+            card.style('width','270px')
+            // console.log(s, card, )
             d3.select('#'+div_id).html('')
             var ti = raw['template_ids']
             var cv = raw['count_vector']
@@ -378,7 +401,7 @@ export default{
                 this.drawTimeline()
 
                 this.tree_items = res.data
-                this.ulWidth = res.data.length * 300 +200
+                // this.ulWidth = res.data.length * this.card_width +this.card_width
                 this.show_tree = true
                 
             })
@@ -408,7 +431,7 @@ export default{
                 })
                 this.drawTimeline()
                 this.tree_items = res.data
-                this.ulWidth = res.data.length * 300 +200
+                // this.ulWidth = res.data.length * this.card_width +this.card_width
                 this.show_tree = true
              
             })
@@ -431,7 +454,7 @@ export default{
                 }
             })
             that.tree_items= new_item
-            that.ulWidth = new_item.length * 300 +200
+            // that.ulWidth = new_item.length * card_width +this.card_width
             that.show_tree = true
         },
         postLogline(data){
@@ -940,16 +963,6 @@ export default{
 
     },
     watch:{
-        show_tree(){
-            var that = this
-            setTimeout(function () {
-                // console.log('test')
-                // console.log(d3.select('#div0'))
-                that.tree_items.forEach(function(d){
-                    that.drawDetail(d['div_id'], d['alert']['features'][0]['value']['log_anomaly_data']['text_dict'])
-                })
-            }, 10);    
-        },
         SELECTED_APP(){
             this.postTreeData()
         },
@@ -963,8 +976,6 @@ export default{
             console.log(this.brushed_items)
             this.drawTable()
         },
-        
-
     },
     mounted(){
         this.getTemplate();
@@ -993,6 +1004,9 @@ export default{
         },
         LOG_ID(){
             return this.$store.getters.LOG_ID
+        },
+        ulWidth(){
+            return (this.tree_items.length+1) * this.card_width 
         }
 
     }
@@ -1028,7 +1042,7 @@ export default{
     
 }
 .el-card{
-    width:280px;
+    width:160px;
 }
 
 ul{
@@ -1053,7 +1067,7 @@ ul{
 }
 .my_timeline_item {
   display: inline-block;
-  width: 300px;
+  width: 180px;
   vertical-align: top;
 }
 .abnormal{
@@ -1093,7 +1107,7 @@ ul{
   border-radius: 50%;
 }
 .my_timeline_item_line {
-  width: 300px;
+  width: 180px;
   height: 10px;
   margin: -6px 0 0 10px;
   border-top: 2px solid #E4E7ED;
@@ -1104,6 +1118,7 @@ ul{
   display: flex;
   flex-flow: column;
   cursor: pointer;
+  width:100px
 }
 
 /* scroll bar  */
