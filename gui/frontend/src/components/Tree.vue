@@ -1,11 +1,6 @@
 <template>
     <div>
         <el-row class="scatter_row">
-            <el-switch
-            v-model="switch_value"
-            active-color="#13ce66"
-            inactive-color="#ff4949">
-            </el-switch>
         </el-row>
         <el-row style="overflow-x:scroll;height:321px;border-bottom:1px solid grey" class="timeLine">
             <div id="div_timeline"></div>
@@ -85,7 +80,6 @@ import Tabulator from 'tabulator-tables';
 export default{
     data(){
         return{
-            switch_value: false, // controling for the timeline card size, 
            text_detail:'ttt',
            tree_items: null,
            show_tree: false,
@@ -459,7 +453,7 @@ export default{
                 // that.fiterTree(x.invert(extent[0]), x.invert(extent[1]), that)
                 // If no selection, back to initial coordinate. Otherwise, update X axis domain
                 if(!extent){
-                    console.log('yes')
+                    // console.log('yes')
                     if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
                     x.domain([ 4,8])
                 }else{
@@ -1114,9 +1108,7 @@ export default{
             console.log(this.brushed_items)
             this.drawTable()
         },
-        switch_value(){
-            console.log(this.switch_value)
-        }
+        
 
     },
     mounted(){
