@@ -318,7 +318,7 @@ export default{
             var data = this.SCATTERPLOT
             d3.selectAll('#div_scatter svg').remove()
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
-            var w = 350, margin=5;
+            var w = 340, margin=5;
             var h = 260;
             var r = 3.5;
             var that = this;
