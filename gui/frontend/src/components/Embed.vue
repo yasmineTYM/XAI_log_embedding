@@ -392,9 +392,10 @@ export default{
                     that.request_postLog()
                 })
                 .attr("fill", function(d, i) { 
+                    // console.log(d)
                     var counts = [0,0];
                     d.forEach(function(p) {
-                        let index = parseInt(p[4])
+                        let index = parseInt(p[2])
                         counts[index]++;
                     });
                     // // console.log(counts)

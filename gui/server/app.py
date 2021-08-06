@@ -48,7 +48,8 @@ def postScatter():
     project = params['projection']
     
     # data = pd.read_csv('../../../../Data/XAI/carts/embeddings/combined_windowed_'+ project+'_moreinfo_link2log.csv')
-    data = pd.read_csv('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/'+project+'.csv')
+    # data = pd.read_csv('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/'+project+'.csv')
+    data = pd.read_csv('../../../../Data/gui/scatterplot/0805_both_refs/'+project+'.csv')
     print(data.columns)
     data['highlight'] = list(np.zeros(len(data)))
     if application =='all':
