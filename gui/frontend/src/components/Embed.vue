@@ -327,34 +327,31 @@ export default{
             .domain(sorted_embed_data)
             .padding(0.01);
 
-            var paths = []
+            var paths= []
             computed_mapping.forEach(function(d){
-                var temp = []
-                temp.push({
-                    'x':x_tem(d['source'])+margin.left+x_tem.bandwidth()/2,
-                    'y':height/2+margin.top
-                })
-                temp.push({
-                    'x':x_embed(d['target'])+margin.left+x_embed.bandwidth()/2,
-                    'y':3*height/4+margin.top
-                })
+                var temp = {}
+                temp['source'] = [x_tem(d['source'])+margin.left+x_tem.bandwidth()/2,height/2+margin.top]
+                temp['target'] = [x_embed(d['target'])+margin.left+x_embed.bandwidth()/2,3*height/4+margin.top]
                 paths.push(temp)
             })
 
             // console.log(paths)
-            var line = d3.line()
-            .curve(d3.curveBasis)
-            .x(d=>d.x)
-            .y(d=>d.y)
+            // var line = d3.line()
+            // .curve(d3.curveBasis)
+            // .x(d=>d.x)
+            // .y(d=>d.y)
 
+           
             d3.select('#div_heatmap_count_two svg')
             .selectAll('.line_mapping')
             .data(paths)
             .enter()
             .append('path')
-            .attr('d', line)
-            .style('stroke', 'red')
-            .style('stroke-width','5px')
+            .attr("d", d3.linkHorizontal())
+            .style('stroke', '#999999')
+            .style('stroke-width','1px')
+            .style('fill','white')
+            .style('fill-opacity',0)
 
             return sorted_embed_data
         },
