@@ -9,13 +9,20 @@ function initialState () {
     SELECTED_PROJECT: 'tsne',
     LOAD_B: false,
     LOG_ID:null,
+    SHOW_DETAIL:false,
+    SHOW_OVERVIEW: true
   }
 }
 export const store = new Vuex.Store({
   strict: true,
   state: initialState,
   mutations: {
-  
+    updateSHOW_DETAIL(state, newValue){
+      state.SHOW_DETAIL = newValue
+    },
+    updateSHOW_OVERVIEW(state, newValue){
+      state.SHOW_OVERVIEW = newValue
+    },
     updateLOG_ID(state, newValue){
       state.LOG_ID = newValue
     },
@@ -36,14 +43,15 @@ export const store = new Vuex.Store({
     },
     updateLOAD_B(state, newValue){
         state.LOAD_B = newValue
-    },
-
+    }
   },
   getters: {
     SELECTED_APP: state => state.SELECTED_APP,
     SCATTERPLOT: state => state.SCATTERPLOT,
     SELECTED_PROJECT: state => state.SELECTED_PROJECT,
     LOAD_B: state => state.LOAD_B,
-    LOG_ID: state => state.LOG_ID
+    LOG_ID: state => state.LOG_ID,
+    SHOW_DETAIL: state => state.SHOW_DETAIL,
+    SHOW_OVERVIEW: state => state.SHOW_OVERVIEW
   }
 })

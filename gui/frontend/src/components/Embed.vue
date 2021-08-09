@@ -601,12 +601,7 @@ export default{
 circle {
     fill-opacity: 0.5;
 }
-.scatter_row{
-    background-color:#515E63; 
-    height:34px;
-    border-radius: 5px;
-    
-}
+
 .normal {
     fill: #346751;
     /* stroke:hsl(0, 3%, 73%);
@@ -650,14 +645,7 @@ circle {
     fill: steelblue;
 }
 
-.scatter_row .el-input__inner {
-    border-radius: 8px;
-    padding-right: 20px;
-    height: 28px;
-    width:120px;
-    background-color:#515E63;
-    color: white;
-}
+
 .el-row {
     margin-bottom:5px
 }
