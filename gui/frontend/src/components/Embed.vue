@@ -35,11 +35,11 @@
                      <div id="div_heatmap_count_error"></div>
                 </el-row>
                 <el-row>
-                    <div id="div_heatmap_count_template"></div>
+                    <div id="div_heatmap_count_two"></div>
                 </el-row>
-                <el-row>
+                <!-- <el-row>
                     <div id="div_heatmap_count_embedding"></div>
-                </el-row>
+                </el-row> -->
                 <!-- <el-row>
                     <el-col :span="3">
                        
@@ -164,13 +164,140 @@ export default{
             .then((res)=>{
                 console.log(res.data)
                 this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
-                this.draw_heatmap(180,300,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
+                this.draw_two(res.data)
                 
-                var sorted_x = this.draw_Link(res.data['x_template'], res.data['x_embedding'])
-                this.draw_heatmap(180,210,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], sorted_x, res.data['y_values'])
             })
         },
-        draw_Link(tem_data, embed_data){
+        draw_two(data){
+
+            d3.select('#div_heatmap_count_two').html('')
+            // ======================================== draw the second heatmap ========================================
+            var margin = {top: 30, right: 10, bottom: 20, left: 50},
+            width = d3.max([400,data['x_embedding'].length*20]) - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom;
+            
+
+            var svg = d3.select('#div_heatmap_count_two')
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            // .attr("id", div_id)
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+            svg.append('g')
+            .append('text')
+            .attr('font-size','12px')
+            .attr('y',-8)
+            .attr('x',width/2)
+            .attr('text-anchor','middle')
+            .text('test')
+
+
+            // Build X scales and axis:
+            var x = d3.scaleBand()
+            .range([ 0, width ])
+            .domain(data['x_template'])
+            .padding(0.01);
+
+            svg.append("g")
+            .attr("class",'x_axis')
+            .attr("transform", "translate(0," + height/2 + ")")
+            .call(d3.axisBottom(x))
+            .selectAll("text")  
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-25)");
+            // Build X scales and axis:
+            var y = d3.scaleBand()
+            .range([ height/2, 0 ])
+            .domain(data['y_values'])
+            .padding(0.01);
+            svg.append("g")
+            .attr('class','y_axis')
+            .call(d3.axisLeft(y));
+
+            // Build color scale
+            var myColor = d3.scaleLinear()
+            .range(["#bdc9e1", "#045a8d"])
+            .domain(d3.extent(data['data_template'], d => d.value))
+
+            var rects = svg.selectAll()
+                .data(data['data_template'], function(d) {return d.group+':'+d.variable;})
+                .enter()
+                .append("rect")
+                .attr("x", function(d) { return x(d.group) })
+                .attr("y", function(d) { return y(d.variable) })
+                .attr("width", x.bandwidth() )
+                .attr("height", y.bandwidth() )
+                .style("fill", function(d) { return myColor(d.value)} )
+            rects.append('title').text(function(d){return d.value})
+            // })
+
+            var ticks = d3.selectAll("#div_heatmap_count_two .y_axis .tick text");
+            var space = parseInt(data['data_template'].length/10)
+            ticks.each(function(_,i){
+                if(i%space !== 0) d3.select(this).remove();
+            });
+
+            // this.draw_heatmap(180,300,'Count of Template', '#div_heatmap_count_template', data['data_template'], data['x_template'], data['y_values'])
+            // ======================================== draw the links ========================================
+
+            var sorted_x = this.draw_Link(data['x_template'], data['x_embedding'], height)
+            // this.draw_heatmap(180,210,'Count of Embedding','#div_heatmap_count_embedding', data['data_embedding'], sorted_x, data['y_values'])
+
+                    // Build X scales and axis:
+            var x_embed = d3.scaleBand()
+            .range([ 0, width ])
+            .domain(sorted_x)
+            .padding(0.01);
+
+             svg.append("g")
+            .attr("class",'x_axis_embed')
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x))
+            .selectAll("text")  
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-25)");
+            
+            var y_embed = d3.scaleBand()
+            .range([ height, 3*height/4])
+            .domain(data['y_values'])
+            .padding(0.01);
+            
+            svg.append("g")
+            .attr('class','y_axis_embed')
+            .call(d3.axisLeft(y_embed));
+
+            // Build color scale
+            var myColor_embed = d3.scaleLinear()
+            .range(["#bdc9e1", "#045a8d"])
+            .domain(d3.extent(data['data_embedding'], d => d.value))
+
+            var rects_embed = svg.selectAll('.rects_embed')
+                .data(data['data_embedding'], function(d) {return d.group+':'+d.variable;})
+                .enter()
+                .append("rect")
+                .attr('class', 'rects_embed')
+                .attr("x", function(d) { return x_embed(d.group) })
+                .attr("y", function(d) { return y_embed(d.variable) })
+                .attr("width", x_embed.bandwidth() )
+                .attr("height", y_embed.bandwidth() )
+                .style("fill", function(d) { return myColor_embed(d.value)} )
+            rects_embed.append('title').text(function(d){return d.value})
+            // })
+
+            var ticks = d3.selectAll("#div_heatmap_count_two .y_axis_embed .tick text");
+            var space = parseInt(data['data_embedding'].length/10)
+            ticks.each(function(_,i){
+                if(i%space !== 0) d3.select(this).remove();
+            });
+
+        },
+        draw_Link(tem_data, embed_data, height){
             var computed_mapping = []
             tem_data.forEach(function(tem){
                 var candidates = MAP[tem]
@@ -183,13 +310,12 @@ export default{
                     }
                 })
             })
-            var sorted_embed_id = computed_mapping.map(function(A) {return A['target'];})
+            var sorted_embed_data = computed_mapping.map(function(A) {return A['target'];})
              
 
-            console.log(computed_mapping,sorted_embed_id)
-            var margin = {top: 0, right: 10, bottom: 50, left: 50},
-            width_tem = d3.max([400,tem_data.length*20]) - margin.left - margin.right,
-            width_embed = d3.max([400,embed_data.length*20]) - margin.left - margin.right
+            var margin = {top: 30, right: 10, bottom: 20, left: 50},
+            width_tem = d3.max([400,embed_data.length*20]) - margin.left - margin.right,
+            width_embed = width_tem
             
             var x_tem = d3.scaleBand()
             .range([ 0, width_tem ])
@@ -198,7 +324,7 @@ export default{
 
             var x_embed = d3.scaleBand()
             .range([0, width_embed])
-            .domain(embed_data)
+            .domain(sorted_embed_data)
             .padding(0.01);
 
             var paths = []
@@ -206,11 +332,11 @@ export default{
                 var temp = []
                 temp.push({
                     'x':x_tem(d['source'])+margin.left+x_tem.bandwidth()/2,
-                    'y':200
+                    'y':height/2+margin.top
                 })
                 temp.push({
                     'x':x_embed(d['target'])+margin.left+x_embed.bandwidth()/2,
-                    'y':500
+                    'y':3*height/4+margin.top
                 })
                 paths.push(temp)
             })
@@ -221,7 +347,7 @@ export default{
             .x(d=>d.x)
             .y(d=>d.y)
 
-            d3.select('#div_heatmap_count_template svg')
+            d3.select('#div_heatmap_count_two svg')
             .selectAll('.line_mapping')
             .data(paths)
             .enter()
@@ -230,7 +356,7 @@ export default{
             .style('stroke', 'red')
             .style('stroke-width','5px')
 
-            return sorted_embed_id
+            return sorted_embed_data
         },
         draw_heatmap(size,h,Title,div_id,DATA,myGroups,myVars){
             // var DATA = RAW['heatmapdata']
@@ -255,10 +381,7 @@ export default{
             .attr('x',width/2)
             .attr('text-anchor','middle')
             .text(Title)
-            // Labels of row and columns
-            // var myGroups = RAW['x_values']
-            // var myVars = RAW['y_values']
-
+          
             // Build X scales and axis:
             var x = d3.scaleBand()
             .range([ 0, width ])
@@ -379,6 +502,9 @@ export default{
                 .attr("width", w+margin)
                 .attr("height", h+margin)
             var g = svg.append("g")
+
+            
+           // ================================= compute the hexigon data =================================  
                 g.attr("clip-path", "url(#clip)")
                 .selectAll("path")
                 .data( hexbin(inputForHexbinFun) )
@@ -424,7 +550,8 @@ export default{
                     return temp; })
                 .attr("stroke", "black")
                 .attr("stroke-width", "0.1")   
-            // ================================= compute the density data =================================
+
+             // ================================= compute the density data =================================
             var densityData = d3Contour.contourDensity()
                 .x(function(d) { return scale_x(d.x); })   // x and y = column name in .csv input data
                 .y(function(d) { return scale_y(d.y); })
@@ -439,7 +566,8 @@ export default{
                 .attr("d", d3.geoPath())
                 .attr("fill", "none")
                 .attr("stroke", "#a6bddb")
-                .attr("stroke-linejoin", "round")     
+                .attr("stroke-linejoin", "round")   
+             
         },
     },
     watch:{
