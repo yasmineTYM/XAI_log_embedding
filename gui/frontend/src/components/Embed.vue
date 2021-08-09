@@ -69,6 +69,7 @@ import axios from 'axios'
 import * as d3Lasso from "d3-lasso"
 import * as d3Hexbin from 'd3-hexbin'
 import MAP from '../../../../../../Data/gui/heatmap/mapping.json'
+import * as d3Contour from 'd3-contour'
 export default{
     data(){
         return{
@@ -134,6 +135,7 @@ export default{
     },
     methods: {
         request_postScatter(){
+            this.$store.commit('updateLOAD_B', true)
             const path = 'http://localhost:5000/postScatter'
             const payload = {
                 'application': this.selected_app,
@@ -143,6 +145,7 @@ export default{
             .then((res)=>{
                 // console.log(res.data['test'])
                 // console.log(res.data)
+                this.$store.commit('updateLOAD_B', false)
                 this.scatterplotData = res.data['test']
                 this.$store.commit('updateSCATTERPLOT', res.data['test'])
                 this.draw()
@@ -161,10 +164,10 @@ export default{
             .then((res)=>{
                 console.log(res.data)
                 this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
-                this.draw_heatmap(180,210,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
-                this.draw_heatmap(180,210,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], res.data['x_embedding'], res.data['y_values'])
-                // this.draw_heatmap(500,'Sequence of Error Flag','#div_heatmap_sequence_error', res.data['sequence_error'], res.data['sequence_x'], res.data['y_values'])
-                this.draw_Link(res.data['x_template'], res.data['x_embedding'])
+                this.draw_heatmap(180,300,'Count of Template', '#div_heatmap_count_template', res.data['data_template'], res.data['x_template'], res.data['y_values'])
+                
+                var sorted_x = this.draw_Link(res.data['x_template'], res.data['x_embedding'])
+                this.draw_heatmap(180,210,'Count of Embedding','#div_heatmap_count_embedding', res.data['data_embedding'], sorted_x, res.data['y_values'])
             })
         },
         draw_Link(tem_data, embed_data){
@@ -180,6 +183,10 @@ export default{
                     }
                 })
             })
+            var sorted_embed_id = computed_mapping.map(function(A) {return A['target'];})
+             
+
+            console.log(computed_mapping,sorted_embed_id)
             var margin = {top: 0, right: 10, bottom: 50, left: 50},
             width_tem = d3.max([400,tem_data.length*20]) - margin.left - margin.right,
             width_embed = d3.max([400,embed_data.length*20]) - margin.left - margin.right
@@ -208,7 +215,7 @@ export default{
                 paths.push(temp)
             })
 
-            console.log(paths)
+            // console.log(paths)
             var line = d3.line()
             .curve(d3.curveBasis)
             .x(d=>d.x)
@@ -223,7 +230,7 @@ export default{
             .style('stroke', 'red')
             .style('stroke-width','5px')
 
-
+            return sorted_embed_id
         },
         draw_heatmap(size,h,Title,div_id,DATA,myGroups,myVars){
             // var DATA = RAW['heatmapdata']
@@ -318,8 +325,8 @@ export default{
             var data = this.SCATTERPLOT
             d3.selectAll('#div_scatter svg').remove()
             // var data = new Array(100).fill(null).map(m=>[Math.random(),Math.random()]);
-            var w = 340, margin=5;
-            var h = 260;
+            var w = 380, margin=5;
+            var h = 270;
             var r = 3.5;
             var that = this;
 
@@ -345,10 +352,12 @@ export default{
             var scale_y = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.y))
                 .range([ r, h ]);
+            // draw contour line 
+            
              // Reformat the data: d3.hexbin() needs a specific format
             var inputForHexbinFun = []
-            data.forEach(function(d) {
-                inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label'], d,d['highlight']] )  // Note that we had the transform value of X and Y !
+                data.forEach(function(d) {
+                    inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label'], d,d['highlight']] )  // Note that we had the transform value of X and Y !
             })
              // Prepare a color palette
             var color = d3.scaleLinear()
@@ -377,7 +386,7 @@ export default{
                 .attr("d", hexbin.hexagon())
                 .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
                 .on('mouseover', function (d, i) {
-                    console.log(d)
+                    // console.log(d)
                     d3.select(this).style('stroke-width','1')
                 })
                 .on('mouseout', function(d,i){
@@ -414,7 +423,23 @@ export default{
                     // console.log(temp)
                     return temp; })
                 .attr("stroke", "black")
-                .attr("stroke-width", "0.1")        
+                .attr("stroke-width", "0.1")   
+            // ================================= compute the density data =================================
+            var densityData = d3Contour.contourDensity()
+                .x(function(d) { return scale_x(d.x); })   // x and y = column name in .csv input data
+                .y(function(d) { return scale_y(d.y); })
+                .size([w+margin, h+margin])
+                .bandwidth(20)    // smaller = more precision in lines = more lines
+                (data)
+            g.selectAll(".contour_path")
+                .data(densityData)
+                .enter()
+                .append("path")
+                .attr('class','contour_path')
+                .attr("d", d3.geoPath())
+                .attr("fill", "none")
+                .attr("stroke", "#a6bddb")
+                .attr("stroke-linejoin", "round")     
         },
     },
     watch:{
