@@ -954,9 +954,9 @@ export default{
                 movableColumns:true,
                 columns:[
                     {title: 'message', field:'message', tooltip:true},
-                    {title: 'app', field: 'instance_id'},
-                    {title: 'timestamp', field: 'timestamp'},
-                    {title: 'flag', field:'error_flag'}
+                    // {title: 'app', field: 'instance_id'},
+                    // {title: 'timestamp', field: 'timestamp'},
+                    // {title: 'flag', field:'error_flag'}
                 ]
             })
         }
