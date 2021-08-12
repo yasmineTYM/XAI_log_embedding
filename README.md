@@ -101,6 +101,7 @@
 * remove package-lock.json
 * npm cache clean --force
 * npm install 
+* npm install --save vuex
 
 4. Run front-end
 * cd gui/frontend/
