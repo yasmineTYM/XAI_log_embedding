@@ -1,4 +1,7 @@
 # 2021_intern_code_data
+## 
+author: Yamei Tu(tu.253@osu.edu)
+
 ## Data
 * the data is saved in the following link: https://ibm.box.com/s/7pqic3v1hb24hmvpa6elzatvxmrfna80
 * if you want to run the system, download the data, and put Data/ and Code/ in the same parent folder(this step will not need in the near future, only XAI_log_embedding/ is required).
