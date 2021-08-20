@@ -260,8 +260,8 @@ export default{
             
             let a = d3.extent(data, function(d) { return d.date; })[0]
             let b = d3.extent(data, function(d) { return d.date; })[1]
-            let c = d3.timeHour.offset(a, -2)
-            let d = d3.timeHour.offset(b,2)
+            let c = d3.timeHour.offset(a, -1)
+            let d = d3.timeHour.offset(b, 1)
             console.log(a,b)
             console.log(c,d)
             // Add X axis --> it is a date format
