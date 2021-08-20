@@ -137,10 +137,10 @@ def postLog():
         # 'data_embedding': output_embed,
         'data': output_heatmap,
         'y_values':y_values,
-        'x_values': x_total 
-        # 'x_error':list(unique_error_flag),
-        # 'x_template': list(unique_template_ids),
-        # 'x_embedding': list(unique_embedding_ids),
+        'x_values': x_total,
+        'x_error':list(unique_error_flag),
+        'x_template': list(unique_template_ids),
+        'x_embedding': list(unique_embedding_ids),
     })
 
 @app.route('/postEmbedding', methods=['POST'])

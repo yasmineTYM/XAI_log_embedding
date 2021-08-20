@@ -166,7 +166,7 @@ export default{
             axios.post(path, payload)
             .then((res)=>{
                 // console.log(res.data)
-                this.draw_heatmap('Count of Cluster Info', '#div_heatmap',res.data['data'], res.data['x_values'], res.data['y_values'])
+                this.draw_heatmap('Count of Cluster Info', '#div_heatmap', res.data)
                 // this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
                 // this.draw_two(res.data)
                 
@@ -359,7 +359,13 @@ export default{
 
             return sorted_embed_data
         },
-        draw_heatmap(Title,div_id,DATA,myGroups,myVars){
+        draw_heatmap(Title,div_id,raw){
+            var DATA = raw['data'],
+            myGroups = raw['x_values'],
+            myVars = raw['y_values'],
+            x_error_flag =raw['x_error'],
+            x_template = raw['x_template'],
+            x_embedding = raw['x_embedding']
             // var DATA = RAW['heatmapdata']
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
@@ -422,9 +428,17 @@ export default{
                 .style("opacity", 1)
             }
             var mousemove = function(d) {
-                // console.log(d3.mouse(this))
+                // console.log(d)
+                var text = ''
+                if(x_error_flag.includes(d['group'])){
+                    text = 'In the window:' + d.variable.toString() + ', there are '+ d.value.toString() +' logs with error flag of '+ d.group.toString()
+                }else if(x_template.includes(d['group'])){
+                    text = 'In the window:' + d.variable.toString() + ', there are '+ d.value.toString() +' logs with log template id of '+ d.group.toString()
+                }else{
+                    text = 'In the window:' + d.variable.toString() + ', there are '+ d.value.toString() +' logs with embedding id of '+ d.group.toString()
+                }
                 tooltip
-                .html("The exact value of<br>this cell is: " + d.value)
+                .html(text)
                 .style("left", (d3.mouse(this)[0]) + "px")
                 .style("top", (d3.mouse(this)[1]) + "px")
             }
