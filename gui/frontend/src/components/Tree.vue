@@ -298,18 +298,6 @@ export default{
             .attr("clip-path", "url(#clip)")
             .style('width', width)
 
-            // Add the line
-            // line.append("path")
-            // .datum(data)
-            // .attr("class", "line")  // I add the class line to be able to modify this line later on.
-            // .attr("fill", "none")
-            // .attr("stroke", "steelblue")
-            // .attr("stroke-width", 1.5)
-            // .attr("d", d3.line()
-            //     .x(function(d) { return x(d.date) })
-            //     .y(function(d) { return y(d.value) })
-            //     )
-             
             var nodes = line
                 .selectAll('.rr')
                 .data(data)
@@ -350,20 +338,14 @@ export default{
                     let a = x.invert(extent[0])
                     let b = x.invert(extent[1])
                     that.fiterTree(a,b,that)
+                    console.log(a,b)
                     x.domain([ a,b ])
                     line.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
                 }
 
                 // Update axis and line position
                 xAxis.transition().duration(1000).call(d3.axisBottom(x))
-                // line
-                //     .select('.line')
-                //     .transition()
-                //     .duration(1000)
-                //     .attr("d", d3.line()
-                //         .x(function(d) { return x(d.date) })
-                //         .y(function(d) { return y(d.value) })
-                //     )
+
                 line.selectAll('.rr').remove()
                 line.append('g')
                 .selectAll('.rr')
@@ -381,13 +363,6 @@ export default{
             svg.on("dblclick",function(){
                 x.domain(d3.extent(data, function(d) { return d.date; }))
                 xAxis.transition().call(d3.axisBottom(x))
-                // line
-                //     .select('.line')
-                //     .transition()
-                //     .attr("d", d3.line()
-                //     .x(function(d) { return x(d.date) })
-                //     .y(function(d) { return y(d.value) })
-                // )
                 that.postTreeData()
             });
 
