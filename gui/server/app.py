@@ -130,42 +130,6 @@ def postLog():
                     'value': counter_embed[label]
                 })
     
-    ## generate data for the sequence event pattern 
-    
-    sequence_error = []
-    x_sequence_error = []
-    
-    sequence_embedding = []
-    sequence_template = []
-    for index, row in selected_pd.iterrows():
-        flag_list = ast.literal_eval(row['error_flag'])
-        
-        template_list = ast.literal_eval(row['template_ids'])
-
-        embedding_list = ast.literal_eval(row['embedding_ids'])
-        
-        for i in range(len(flag_list)):
-            if i not in x_sequence_error:
-                x_sequence_error.append(i)
-            if flag_list[i]==False:
-                value = 0
-            else:
-                value = 1
-            sequence_error.append({
-                'variable':index,
-                'group': i,
-                'value': value
-            })
-            sequence_template.append({
-                'variable':index,
-                'group':i,
-                'value': template_list[i]
-            })
-            sequence_embedding.append({
-                'variable': index,
-                'group':i,
-                'value': embedding_list[i]
-            })
     return jsonify({
         'data_error': output_error,
         'data_template':output_template,
@@ -174,10 +138,6 @@ def postLog():
         'y_values':y_values,
         'x_template': list(unique_template_ids),
         'x_embedding': list(unique_embedding_ids),
-        'sequence_error': sequence_error,
-        'sequence_embedding': sequence_embedding,
-        'sequence_template': sequence_template,
-        'sequence_x': x_sequence_error
     })
 
 @app.route('/postEmbedding', methods=['POST'])
