@@ -323,7 +323,10 @@ def postLogline():
 def findRef():
     scatterplot = request.get_json()['scatterplot']
     scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
-    
+    # print(scatterplot_pd.columns)
+    print(len(scatterplot_pd))
+    scatterplot_pd = scatterplot_pd.loc[scatterplot_pd['anomaly_label']==0]
+    print(len(scatterplot_pd))
 
     ## get windowed embeddings, find the closet window embedding from the reference windows     
     new_embedding = request.get_json()['window_embedding']

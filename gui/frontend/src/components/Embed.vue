@@ -180,7 +180,7 @@ export default{
             var svg = d3.select('#div_heatmap_count_two')
             .append("svg")
             .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
+            .attr("height", height*2 + margin.top + margin.bottom)
             .append("g")
             // .attr("id", div_id)
             .attr("transform","translate(" + margin.left + "," + margin.top + ")");
@@ -255,8 +255,8 @@ export default{
 
              svg.append("g")
             .attr("class",'x_axis_embed')
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x))
+            .attr("transform", "translate(0," + height*1.25 + ")")
+            .call(d3.axisBottom(x_embed))
             .selectAll("text")  
             .style("text-anchor", "end")
             .attr("dx", "-.8em")
@@ -264,7 +264,7 @@ export default{
             .attr("transform", "rotate(-25)");
             
             var y_embed = d3.scaleBand()
-            .range([ height, 3*height/4])
+            .range([ height*1.25, 3*height/4])
             .domain(data['y_values'])
             .padding(0.01);
             
@@ -468,10 +468,10 @@ export default{
 
             var scale_x = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.x))
-                .range([ r, w ]);
+                .range([ r*10, w-r*10 ]);
             var scale_y = d3.scaleLinear()
                 .domain(d3.extent(data, d => d.y))
-                .range([ r, h ]);
+                .range([ r*12, h-r*10 ]);
             // draw contour line 
             
              // Reformat the data: d3.hexbin() needs a specific format
@@ -498,15 +498,43 @@ export default{
                 .append("rect")
                 .attr("width", w+margin)
                 .attr("height", h+margin)
-            var g = svg.append("g")
+            var g = svg.append("g").attr("clip-path", "url(#clip)")
 
-            
-           // ================================= compute the hexigon data =================================  
-                g.attr("clip-path", "url(#clip)")
-                .selectAll("path")
+              // ================================= compute the density data =================================
+        //     var densityData = d3Contour.contourDensity()
+        //         .x(function(d) { return scale_x(d.x); })   // x and y = column name in .csv input data
+        //         .y(function(d) { return scale_y(d.y); })
+        //         .size([w+margin, h+margin])
+        //         .bandwidth(20)    // smaller = more precision in lines = more lines
+        //         (data)
+        //     g.selectAll(".contour_path")
+        //         .data(densityData)
+        //         .enter()
+        //         .append("path")
+        //         .attr('class','contour_path')
+        //         .attr("d", d3.geoPath())
+        //         .attr("fill", "none")
+        //         .attr("stroke", "#a6bddb")
+        //         .attr("stroke-linejoin", "round")  
+             
+        //    // ================================= compute the hexigon data =================================  
+                g.selectAll(".hexigon_path")
                 .data( hexbin(inputForHexbinFun) )
                 .enter().append("path")
-                .attr("d", hexbin.hexagon())
+                .attr('class','hexigon_path')
+                .attr("d", function(d){
+                    // console.log(d)
+                    if(d[0][3]['highlight']==0){
+                        return hexbin.hexagon()
+                    }
+                    // else{
+                    //     var symbolGenerator = d3.symbol()
+	                //     .size(100)
+                    //     .type(d3['symbolCross']);
+                    //     return symbolGenerator()
+                    // }
+                    
+                })
                 .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
                 .on('mouseover', function (d, i) {
                     // console.log(d)
@@ -524,22 +552,17 @@ export default{
                     that.request_postLog()
                 })
                 .attr("fill", function(d, i) { 
-                    // console.log(d)
                     var counts = [0,0];
                     d.forEach(function(p) {
                         let index = parseInt(p[2])
                         counts[index]++;
                     });
-                    // // console.log(counts)
                     let output = counts.reduce(function(p, c, i) { 
                         let temp = d3.interpolateLab(p, colors[i])(c / d.length);
-                        // console.log(temp)
                         return temp
                     }, "white")
-                    // // console.log(output)
                     return output;
-                    // console.log(d.length)
-                    // return color(d.length);
+                  
                  })
                 .style('opacity', function(d) { 
                     let temp = attenuation(d.length)
@@ -548,23 +571,7 @@ export default{
                 .attr("stroke", "black")
                 .attr("stroke-width", "0.1")   
 
-             // ================================= compute the density data =================================
-            var densityData = d3Contour.contourDensity()
-                .x(function(d) { return scale_x(d.x); })   // x and y = column name in .csv input data
-                .y(function(d) { return scale_y(d.y); })
-                .size([w+margin, h+margin])
-                .bandwidth(20)    // smaller = more precision in lines = more lines
-                (data)
-            g.selectAll(".contour_path")
-                .data(densityData)
-                .enter()
-                .append("path")
-                .attr('class','contour_path')
-                .attr("d", d3.geoPath())
-                .attr("fill", "none")
-                .attr("stroke", "#a6bddb")
-                .attr("stroke-linejoin", "round")   
-             
+            
         },
     },
     watch:{

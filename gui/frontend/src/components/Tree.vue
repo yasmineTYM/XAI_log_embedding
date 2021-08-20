@@ -143,9 +143,9 @@ export default{
                 })
             })
 
-            var margin = {top: 10, right: 30, bottom: 40, left: 50},
+            var margin = {top: 10, right: 30, bottom: 60, left: 50},
                 width = 300 - margin.left - margin.right,
-                height = 140 - margin.top - margin.bottom;
+                height = 120 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
             var svg = d3.select("#"+div_id)
@@ -245,7 +245,7 @@ export default{
             d3.select('#div_timeline').html('')
             var data = this.timeline
             // set the dimensions and margins of the graph
-            var margin = {top: 0, right: 30, bottom: 20, left: 60},
+            var margin = {top: 0, right: 0, bottom: 20, left: 0},
                 width = 1200 - margin.left - margin.right,
                 height = 40 - margin.top - margin.bottom;
 
@@ -258,11 +258,17 @@ export default{
                 .attr("transform",
                     "translate(" + margin.left + "," + margin.top + ")");
             
-            
+            let a = d3.extent(data, function(d) { return d.date; })[0]
+            let b = d3.extent(data, function(d) { return d.date; })[1]
+            let c = d3.timeHour.offset(a, -2)
+            let d = d3.timeHour.offset(b,2)
+            console.log(a,b)
+            console.log(c,d)
             // Add X axis --> it is a date format
             var x = d3.scaleTime()
-            .domain(d3.extent(data, function(d) { return d.date; }))
-            .range([ 5, width-5 ]);
+            .domain([c,d])
+            .range([ 0, width ]);
+            
             var xAxis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
@@ -290,6 +296,7 @@ export default{
             // Create the line variable: where both the line and the brush take place
             var line = svg.append('g')
             .attr("clip-path", "url(#clip)")
+            .style('width', width)
 
             // Add the line
             // line.append("path")
@@ -302,21 +309,26 @@ export default{
             //     .x(function(d) { return x(d.date) })
             //     .y(function(d) { return y(d.value) })
             //     )
-            var nodes = line.append('g')
-            .selectAll('.rr')
-            .data(data)
-            .enter()
-            .append('g')
-            .append('circle')
-            .attr('class','rr')
-            .attr('cx', d=>x(d.date))
-            .attr('cy', d=>y(0))
-            .attr('r',3)
+             
+            var nodes = line
+                .selectAll('.rr')
+                .data(data)
+                .enter()
+                .append('g')
+                .append('circle')
+                .attr('class','rr')
+                .attr('cx', function(d){
+
+                    let temp = x(d.date)
+                    return temp
+                })
+                .attr('cy', d=>y(0))
+                .attr('r',5)
     // Add the brushing
-            line
-            .append("g")
+            line.append("g")
+                .attr('width',width)
                 .attr("class", "brush")
-                .call(brush);
+                .call(brush)
 
             // A function that set idleTimeOut to null
             var idleTimeout
@@ -908,6 +920,9 @@ export default{
                     return '#4E89AE'
                 }
             })
+            .on('click',function(d){
+                console.log(that.embed_template[d.id])
+            })
         
             var that = this
             bars.append('title')
@@ -1036,7 +1051,7 @@ export default{
     border-left: 2px solid #D6D2C4
 }
 .el-card__body{
-    height:200px;
+    height:260px;
     padding:0px;
     text-align: start;
     
