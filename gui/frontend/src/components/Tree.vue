@@ -247,7 +247,7 @@ export default{
             // set the dimensions and margins of the graph
             var margin = {top: 0, right: 0, bottom: 20, left: 0},
                 width = 1200 - margin.left - margin.right,
-                height = 40 - margin.top - margin.bottom;
+                height = 50 - margin.top - margin.bottom;
 
             // append the svg object to the body of the page
             var svg = d3.select("#div_timeline")
@@ -272,14 +272,15 @@ export default{
             var xAxis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
-
+            xAxis.transition().call(d3.axisBottom(x))
             // Add Y axis
             var y = d3.scaleLinear()
             .domain([0, d3.max(data, function(d) { return +d.value; })])
             .range([ height, 0 ]);
             // var yAxis = svg.append("g")
             // .call(d3.axisLeft(y));
-
+            
+                
             // Add a clipPath: everything out of this area won't be drawn.
             var clip = svg.append("defs").append("svg:clipPath")
                 .attr("id", "clip")
@@ -306,12 +307,11 @@ export default{
                 .append('circle')
                 .attr('class','rr')
                 .attr('cx', function(d){
-
                     let temp = x(d.date)
                     return temp
                 })
                 .attr('cy', d=>y(0))
-                .attr('r',5)
+                .attr('r',6)
     // Add the brushing
             line.append("g")
                 .attr('width',width)
