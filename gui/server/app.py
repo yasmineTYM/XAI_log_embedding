@@ -92,9 +92,10 @@ def postLog():
     print(unique_error_flag, unique_template_ids, unique_embedding_ids)
     
     ## generate the data for COUNT heatmap 
-    output_error = []
-    output_template = []
-    output_embed = []
+    # output_error = []
+    # output_template = []
+    # output_embed = []
+    output_heatmap = []
     y_values = []
     
     
@@ -110,34 +111,36 @@ def postLog():
 
         for label in unique_error_flag:
             if label in counter_error.keys():
-                output_error.append({
+                output_heatmap.append({
                     'group': str(label),
                     'variable': index,
                     'value': counter_error[label]
                 })
         for label in unique_template_ids:
             if label in counter_template.keys():
-                output_template.append({
+                output_heatmap.append({
                     'group': str(label),
                     'variable': index,
                     'value': counter_template[label]
                 })
         for label in unique_embedding_ids:
             if label in counter_embed.keys():
-                output_embed.append({
+                output_heatmap.append({
                     'group': str(label),
                     'variable': index,
                     'value': counter_embed[label]
                 })
-    
+    x_total = list(unique_error_flag)+list(unique_template_ids)+ list(unique_embedding_ids)
     return jsonify({
-        'data_error': output_error,
-        'data_template':output_template,
-        'data_embedding': output_embed,
-        'x_error':list(unique_error_flag),
+        # 'data_error': output_error,
+        # 'data_template':output_template,
+        # 'data_embedding': output_embed,
+        'data': output_heatmap,
         'y_values':y_values,
-        'x_template': list(unique_template_ids),
-        'x_embedding': list(unique_embedding_ids),
+        'x_values': x_total 
+        # 'x_error':list(unique_error_flag),
+        # 'x_template': list(unique_template_ids),
+        # 'x_embedding': list(unique_embedding_ids),
     })
 
 @app.route('/postEmbedding', methods=['POST'])

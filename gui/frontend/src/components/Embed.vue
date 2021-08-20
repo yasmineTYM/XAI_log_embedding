@@ -32,11 +32,14 @@
         <el-row>
             <div style="height:620px;border-right:1px solid grey; overflow:scroll" class="heatmap_div">
                 <el-row>
-                     <div id="div_heatmap_count_error"></div>
+                    <div id="div_heatmap" style="height:620px"></div>
+                </el-row>
+                <!-- <el-row>
+                    <div id="div_heatmap_count_error"></div>
                 </el-row>
                 <el-row>
                     <div id="div_heatmap_count_two"></div>
-                </el-row>
+                </el-row> -->
                 <!-- <el-row>
                     <div id="div_heatmap_count_embedding"></div>
                 </el-row> -->
@@ -162,9 +165,10 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                console.log(res.data)
-                this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
-                this.draw_two(res.data)
+                // console.log(res.data)
+                this.draw_heatmap('Count of Cluster Info', '#div_heatmap',res.data['data'], res.data['x_values'], res.data['y_values'])
+                // this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
+                // this.draw_two(res.data)
                 
             })
         },
@@ -355,13 +359,13 @@ export default{
 
             return sorted_embed_data
         },
-        draw_heatmap(size,h,Title,div_id,DATA,myGroups,myVars){
+        draw_heatmap(Title,div_id,DATA,myGroups,myVars){
             // var DATA = RAW['heatmapdata']
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
-            var margin = {top: 30, right: 10, bottom: 20, left: 50},
-            width = d3.max([400,myGroups.length*20]) - margin.left - margin.right,
-            height = h - margin.top - margin.bottom;
+            var margin = {top: 50, right: 10, bottom: 40, left: 50},
+            width = d3.max([400,myGroups.length*10])- margin.left - margin.right,
+            height = d3.max([620,myVars.length*10]) - margin.top - margin.bottom;
             // append the svg object to the body of the page
             var svg = d3.select(div_id)
             .append("svg")
@@ -370,14 +374,6 @@ export default{
             .append("g")
             // .attr("id", div_id)
             .attr("transform","translate(" + margin.left + "," + margin.top + ")");
-            
-            svg.append('g')
-            .append('text')
-            .attr('font-size','12px')
-            .attr('y',-8)
-            .attr('x',width/2)
-            .attr('text-anchor','middle')
-            .text(Title)
           
             // Build X scales and axis:
             var x = d3.scaleBand()
@@ -406,23 +402,64 @@ export default{
             var myColor = d3.scaleLinear()
             .range(["#bdc9e1", "#045a8d"])
             .domain(d3.extent(DATA, d => d.value))
-
+            
+            
+            var tooltip = d3.select("#div_heatmap")
+                .append("div")
+                .style("opacity", 0)
+                .attr("class", "tooltip")
+                .style("background-color", "white")
+                .style("border", "solid")
+                .style("border-width", "2px")
+                .style("border-radius", "5px")
+                .style("padding", "5px")
+                .style('pointer-events','none')
+            var mouseover = function(d) {
+                tooltip
+                .style("opacity", 1)
+                d3.select(this)
+                .style("stroke", "black")
+                .style("opacity", 1)
+            }
+            var mousemove = function(d) {
+                // console.log(d3.mouse(this))
+                tooltip
+                .html("The exact value of<br>this cell is: " + d.value)
+                .style("left", (d3.mouse(this)[0]) + "px")
+                .style("top", (d3.mouse(this)[1]) + "px")
+            }
+            var mouseleave = function(d) {
+                tooltip
+                .style("opacity", 0)
+                d3.select(this)
+                .style("stroke", "none")
+                .style("opacity", 0.8)
+            }
             var rects = svg.selectAll()
                 .data(DATA, function(d) {return d.group+':'+d.variable;})
                 .enter()
                 .append("rect")
+                .attr("rx", 4)
+                .attr("ry", 4)
                 .attr("x", function(d) { return x(d.group) })
                 .attr("y", function(d) { return y(d.variable) })
                 .attr("width", x.bandwidth() )
                 .attr("height", y.bandwidth() )
-                .style("fill", function(d) { return myColor(d.value)} )
-            rects.append('title').text(function(d){return d.value})
+                .style("fill", function(d) { return myColor(d.value)})
+                .style("opacity", 0.8)
+                .on("mouseover", mouseover)
+                .on("mousemove", mousemove)
+                .on("mouseleave", mouseleave)
+            
+            // rects.append('title').text(function(d){return d.value})
             // })
 
             var ticks = d3.selectAll(div_id+" .y_axis .tick text");
             var space = parseInt(DATA.length/10)
             ticks.each(function(_,i){
-                if(i%space !== 0) d3.select(this).remove();
+                if(DATA.length>60){
+                    if(i%space !== 0) d3.select(this).remove();
+                }
             });
 
             // var lines = d3.selectAll(div_id+" .y_axis .tick line");
@@ -676,5 +713,27 @@ circle {
   /* border-radius: 6px;
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
   background-color: rgb(197, 194, 194); */
+}
+.tooltip{
+    position: absolute;
+    z-index: 1070;
+    display: block;
+    margin: 0;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    text-align: start;
+    text-decoration: none;
+    text-shadow: none;
+    text-transform: none;
+    letter-spacing: normal;
+    word-break: normal;
+    word-spacing: normal;
+    white-space: normal;
+    line-break: auto;
+    font-size: .875rem;
+    word-wrap: break-word;
 }
 </style>
