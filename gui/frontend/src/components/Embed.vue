@@ -165,10 +165,21 @@ export default{
             }
             axios.post(path, payload)
             .then((res)=>{
-                // console.log(res.data)
-                this.draw_heatmap('Count of Cluster Info', '#div_heatmap', res.data)
-                // this.draw_heatmap(180,210,'Count of Error Flag','#div_heatmap_count_error',res.data['data_error'], res.data['x_error'], res.data['y_values'])
-                // this.draw_two(res.data)
+                
+                var computed_mapping = []
+                res.data['x_template'].forEach(function(tem){
+                    var candidates = MAP[tem]
+                    candidates.forEach(function(ele){
+                        if(res.data['x_embedding'].includes(ele)){
+                            computed_mapping.push({
+                                'source': tem,
+                                'target': ele
+                            })
+                        }
+                    })
+                })
+                var sorted_embed_data = computed_mapping.map(function(A) {return A['target'];})
+                this.draw_heatmap('Count of Cluster Info', '#div_heatmap', res.data, sorted_embed_data, computed_mapping)
                 
             })
         },
@@ -359,13 +370,16 @@ export default{
 
             return sorted_embed_data
         },
-        draw_heatmap(Title,div_id,raw){
+        draw_heatmap(Title,div_id,raw,sorted, mapping){
+            console.log(mapping)
             var DATA = raw['data'],
-            myGroups = raw['x_values'],
             myVars = raw['y_values'],
             x_error_flag =raw['x_error'],
-            x_template = raw['x_template'],
-            x_embedding = raw['x_embedding']
+            x_template = raw['x_template']
+
+            var temp = raw['x_error'].concat(raw['x_template'])
+            var myGroups = temp.concat(sorted)
+            
             // var DATA = RAW['heatmapdata']
             d3.select(div_id).html('')
             // set the dimensions and margins of the graph
@@ -380,21 +394,41 @@ export default{
             .append("g")
             // .attr("id", div_id)
             .attr("transform","translate(" + margin.left + "," + margin.top + ")");
-          
+
             // Build X scales and axis:
             var x = d3.scaleBand()
             .range([ 0, width ])
             .domain(myGroups)
             .padding(0.01);
-            svg.append("g")
+
+            var arc_links = svg.selectAll('mylinks')
+                .data(mapping)
+                .enter()
+                .append('path')
+                .attr('d', function (d) {
+                let start = x(d['source'])+x.bandwidth()/2   // X position of start node on the X axis
+                let end = x(d['target'].toString())+x.bandwidth()/2    // X position of end node
+                return ['M', start, 0,    // the arc starts at the coordinate x=start, y=height-30 (where the starting node is)
+                    'A',                            // This means we're gonna build an elliptical arc
+                    (start - end)/1.2, ',',    // Next 2 lines are the coordinates of the inflexion point. Height of this point is proportional with start - end distance
+                    (start - end)/1.2, 0, 0, ',',
+                    start < end ? 1 : 0, end, ',', 0] // We always want the arc on top. So if end is before start, putting 0 here turn the arc upside down.
+                    .join(' ');
+                })
+                .style("fill", "none")
+                .attr("stroke", "black")
+
+            var x_text = svg.append("g")
             .attr("class",'x_axis')
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x))
             .selectAll("text")  
-            .style("text-anchor", "end")
+            
+            x_text.style("text-anchor", "end")
             .attr("dx", "-.8em")
             .attr("dy", ".15em")
             .attr("transform", "rotate(-25)");
+
             // Build X scales and axis:
             var y = d3.scaleBand()
             .range([ height, 0 ])
@@ -428,7 +462,7 @@ export default{
                 .style("opacity", 1)
             }
             var mousemove = function(d) {
-                // console.log(d)
+                let hovered = d.group 
                 var text = ''
                 if(x_error_flag.includes(d['group'])){
                     text = 'In the window:' + d.variable.toString() + ', there are '+ d.value.toString() +' logs with error flag of '+ d.group.toString()
@@ -441,6 +475,23 @@ export default{
                 .html(text)
                 .style("left", (d3.mouse(this)[0]) + "px")
                 .style("top", (d3.mouse(this)[1]) + "px")
+
+                arc_links.style('stroke',function(p){
+                    console.log(p)
+                    if(p['source']==hovered || p['target'].toString()==hovered){
+                        return '#2b8cbe'
+                    }else{
+                        return 'black'
+                    }
+                })
+                arc_links.style('stroke-width',function(p){
+                    console.log(p)
+                    if(p['source']==hovered || p['target'].toString()==hovered){
+                        return '2px'
+                    }else{
+                        return '1px'
+                    }
+                })
             }
             var mouseleave = function(d) {
                 tooltip
@@ -448,6 +499,9 @@ export default{
                 d3.select(this)
                 .style("stroke", "none")
                 .style("opacity", 0.8)
+
+                arc_links.style('stroke','black')
+                .style('stroke-width','1px')
             }
             var rects = svg.selectAll()
                 .data(DATA, function(d) {return d.group+':'+d.variable;})
@@ -490,7 +544,6 @@ export default{
             // });
 
         },
-        
         draw(){
             // console.log('ttttt')
             var data = this.SCATTERPLOT
