@@ -292,7 +292,8 @@ def findRef():
     print(len(scatterplot_pd))
 
     ## get windowed embeddings, find the closet window embedding from the reference windows     
-    new_embedding = request.get_json()['window_embedding']
+    new_embedding = request.get_json()['window_embedding'] ## selected one 
+    log_embeddings_selected = request.get_json()['log_embeddings'] ## selected one 
     distance_list=[]
     
     for ele in scatterplot_pd['embeddings'].tolist():
@@ -305,13 +306,18 @@ def findRef():
     min_index = distance_list.index(min(distance_list))
     
     ## get the log embeddings of the min_index
-    log_embeddings = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_embeddings'])
-    log_errors = ast.literal_eval(scatterplot_pd.loc[min_index]['log_original'])
+    log_embeddings_ref = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_embeddings'])
+    log_errors = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_original'])
     
+    distance_matrix = distance.cdist( log_embeddings_ref, log_embeddings_selected,'euclidean')
+    
+    # print(np.array(log_embeddings_selected).shape, np.array(log_embeddings_ref).shape)
+    # print(distance_matrix.shape)
     
     return jsonify({
-        'log_embeddings': log_embeddings,
-        'raw': log_errors
+        # 'log_embeddings': log_embeddings_ref,
+        'ref_errors': log_errors,
+        'matrix_distance': distance_matrix.tolist()
     })
 @app.route('/getTemplate', methods=['GET'])
 def getTemplate():

@@ -515,7 +515,7 @@ export default{
                     copy_eventdrops.push(d)
                 })
 
-                this.drawCoordinate(copy_eventdrops,coordinate_data, features,that.dim_s, false,'#div_embed')
+                // this.drawCoordinate(copy_eventdrops,coordinate_data, features,that.dim_s, false,'#div_embed')
                 
                 this.drawEventDrop(null)
             })
@@ -526,33 +526,54 @@ export default{
             var path_1 = "http://localhost:5000/findRef"
             var payload_1 = {
                 'scatterplot': this.SCATTERPLOT,
-                'window_embedding':data['actual_embeddings']
+                'window_embedding':data['actual_embeddings'],
+                'log_embeddings': data['log_embeddings']
             }
             axios.post(path_1, payload_1)
-            .then((res)=>{
-                var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
-                var coordinate_data = []
-                var id = 0
-                res.data['log_embeddings'].forEach(function(d, index){
-                    // console.log(that.baseline)
-                    var result = {};
-                    keys.forEach((key, i) => result[key] = d[i])
-                    result['type']='logs'
-                    result['player'] = id
-                    result['baseline'] = 0
-                    // result['dimension'] = that.dim_s[index-1]
-                    coordinate_data.push(result)
-                    id = id+1
+            .then((res1)=>{
+                var heatmap_data = []
+                let selected_n = res1.data['matrix_distance'].length
+                let ref_n = res1.data['matrix_distance'][0].length
+                
+                for(let i=0; i<selected_n; i++){
+                    for(let j=0; j<ref_n; j++){
+                        heatmap_data.push({
+                            'variable': i.toString(),
+                            'group': j.toString(),
+                            'value': res1.data['matrix_distance'][i][j] 
+                        })
+                    }
+                }
+                const myVars = [...new Set(heatmap_data.map(item => item.variable))];
+                const myGroups = [...new Set(heatmap_data.map(item => item.group))];
+                let copy_eventdrops = []
+                data['eventdrops'].forEach(function(d){
+                    copy_eventdrops.push(d)
                 })
-                var features = []
-                keys.forEach(function(d){
-                    let e = d3.extent(coordinate_data, p=>p[d])
-                    features.push({
-                        'name': d,
-                        'range': e
-                    })
-                })
-                this.drawCoordinate(res.data['raw'],coordinate_data, features,[],true,'#div_ref')
+                that.drawHeatmap(heatmap_data, myVars, myGroups, copy_eventdrops, res1.data['ref_errors'])
+                // var keys = ['dim1', 'dim2', 'dim3','dim4','dim5','dim6','dim7','dim8','dim9','dim10','dim11','dim12','dim13','dim14','dim15','dim16','dim17','dim18','dim19','dim20'];
+                // var coordinate_data = []
+                // var id = 0
+                // res.data['log_embeddings'].forEach(function(d, index){
+                //     // console.log(that.baseline)
+                //     var result = {};
+                //     keys.forEach((key, i) => result[key] = d[i])
+                //     result['type']='logs'
+                //     result['player'] = id
+                //     result['baseline'] = 0
+                //     // result['dimension'] = that.dim_s[index-1]
+                //     coordinate_data.push(result)
+                //     id = id+1
+                // })
+                // var features = []
+                // keys.forEach(function(d){
+                //     let e = d3.extent(coordinate_data, p=>p[d])
+                //     features.push({
+                //         'name': d,
+                //         'range': e
+                //     })
+                // })
+                // this.drawCoordinate(res.data['raw'],coordinate_data, features,[],true,'#div_ref')
             })
             .catch((error)=>{
                 console.log(error)
@@ -583,6 +604,66 @@ export default{
                 console.log(error)
             })
             this.drawLIME(data['lime'])
+        },
+        drawHeatmap(data, myVars, myGroups, selected_logs, ref_logs){
+            d3.select('#div_embed').html('')
+            console.log(selected_logs, ref_logs)
+            var unit = d3.min([parseInt(1191/myGroups.length), parseInt(440/myVars.length)])
+           // set the dimensions and margins of the graph
+            var margin = {top: 30, right: 30, bottom: 30, left: 30},
+            width = unit*myGroups.length - margin.left - margin.right,
+            height = unit*myVars.length - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#div_embed")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+
+            // Build X scales and axis:
+            var x = d3.scaleBand()
+            .range([ 0, width ])
+            .domain(myGroups)
+            .padding(0.01);
+            svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x))
+
+            // Build X scales and axis:
+            var y = d3.scaleBand()
+            .range([ height, 0 ])
+            .domain(myVars)
+            .padding(0.01);
+            svg.append("g")
+            .call(d3.axisLeft(y));
+
+            // Build color scale
+            var myColor = d3.scaleLinear()
+            .range(["white", "#69b3a2"])
+            .domain(d3.extent(data, d=> d.value))
+
+            svg.selectAll()
+            .data(data, function(d) {return d.group+':'+d.variable;})
+            .enter()
+            .append("rect")
+            .attr("x", function(d) { return x(d.group) })
+            .attr("y", function(d) { return y(d.variable) })
+            .attr("width", x.bandwidth() )
+            .attr("height", y.bandwidth() )
+            .style("fill", function(d) { return myColor(d.value)} )
+            .on('click',function(d){
+                let selected_id = d['group']
+                let ref_id = d['variable']
+                // console.log()
+                console.log('reference:', ref_logs[parseInt(ref_id)].message)
+                console.log('selected:', selected_logs[parseInt(selected_id)].message)
+            })
+
+
         },
         drawEventDrop(id){
             // console.log('func')

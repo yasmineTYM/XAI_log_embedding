@@ -485,7 +485,7 @@ export default{
                     }
                 })
                 arc_links.style('stroke-width',function(p){
-                    console.log(p)
+                    // console.log(p)
                     if(p['source']==hovered || p['target'].toString()==hovered){
                         return '2px'
                     }else{
