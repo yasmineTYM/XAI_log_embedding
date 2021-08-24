@@ -311,13 +311,16 @@ def findRef():
     
     distance_matrix = distance.cdist( log_embeddings_ref, log_embeddings_selected,'euclidean')
     
+    distance_matrix_normed = distance_matrix / distance_matrix.max(axis=0)
+    x2 = np.ones((distance_matrix.shape))
+    x3 = np.subtract(x2, distance_matrix_normed)
     # print(np.array(log_embeddings_selected).shape, np.array(log_embeddings_ref).shape)
     # print(distance_matrix.shape)
     
     return jsonify({
         # 'log_embeddings': log_embeddings_ref,
         'ref_errors': log_errors,
-        'matrix_distance': distance_matrix.tolist()
+        'matrix_distance': x3.tolist()
     })
 @app.route('/getTemplate', methods=['GET'])
 def getTemplate():
@@ -363,7 +366,8 @@ def baseLine():
     return jsonify({
         'dimension_sort': sorted(dimensions_sort_list, key = lambda i: i['dim']),
         'output': log_indicator,
-        'test':dimensions_sort
+        'test':dimensions_sort,
+        'test_linechart': np.random.random_sample(log_embeddings.shape).tolist()
     })
 if __name__ == '__main__':
     app.run()

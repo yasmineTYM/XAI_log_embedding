@@ -458,6 +458,7 @@ export default{
             }
             axios.post(test, payload1)
             .then((res)=>{
+                console.log(res.data)
                 // console.log(res.data.dimension_sort)
                 // console.log(res.data.output)
                 that.baseline = res.data.output
