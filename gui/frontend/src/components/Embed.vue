@@ -581,6 +581,7 @@ export default{
              // Reformat the data: d3.hexbin() needs a specific format
             var inputForHexbinFun = []
                 data.forEach(function(d) {
+                    // console.log(d['highlight'])
                     inputForHexbinFun.push( [scale_x(d.x), scale_y(d.y), d['anomaly_label'], d,d['highlight']] )  // Note that we had the transform value of X and Y !
             })
              // Prepare a color palette
@@ -628,15 +629,31 @@ export default{
                 .attr('class','hexigon_path')
                 .attr("d", function(d){
                     // console.log(d)
-                    if(d[0][3]['highlight']==0){
-                        return hexbin.hexagon()
-                    }
+                    // if(d[0][3]['highlight']==0){
+                    //     return hexbin.hexagon()
+                    // }
                     // else{
                     //     var symbolGenerator = d3.symbol()
 	                //     .size(100)
                     //     .type(d3['symbolCross']);
                     //     return symbolGenerator()
                     // }
+                    let flag = false 
+                    d.forEach(function(p){
+                        // console.log(p[4]===1, p[4], p[4]===1.0)
+                        if(p[4]===1){
+                            flag=true
+                        }
+                    })
+                    console.log(flag)
+                    if(flag==true){
+                        var symbolGenerator = d3.symbol()
+	                    .size(50)
+                        .type(d3['symbolCross']);
+                        return symbolGenerator()
+                    }else{
+                        return hexbin.hexagon()
+                    }
                     
                 })
                 .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })

@@ -237,41 +237,57 @@ def postLogline():
         #     temp['positive_uncertainty'] = random.uniform(0, 1)
         #     temp['negative_score'] = random.uniform(0, 1)
         #     output.append(temp)
+    
     ##================================ data for scatterplot ================================
     scatterplot = request.get_json()['scatterplot']
     scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
     
+    
+    selected = request.get_json()['window_info']['actual_embeddings']
+    highlight_ = []
+    # print(selected)
+    # print('=====')
+    # print(type(scatterplot_pd.iloc[0]['log_embeddings']))
+    for index, row in scatterplot_pd.iterrows():
+        
+        embed = ast.literal_eval(row['embeddings'])
+        embed_round = [round(b,10) for b in embed]
+        if str(embed_round)==str(selected):
+            highlight_.append(1)
+            print('yes')
+        else:
+            highlight_.append(0)
+    temp = pd.DataFrame({
+        'highlight': highlight_
+    })
+    scatterplot_pd.update(temp)
+    # for ele in scatterplot_pd['embeddings'].tolist():
+    #     try:
+    #         embedding_.append(ast.literal_eval(ele))
+    #     except:
+    #         embedding_.append(ele)
+    # list(embedding_).append(new_embedding)
 
-    # embedding_ = np.load('../../../../Data/gui/scatterplot/07_19_normal_refs/computed/allembed.npy')
-    new_embedding = request.get_json()['window_embedding']
-    embedding_=[]
-    for ele in scatterplot_pd['embeddings'].tolist():
-        try:
-            embedding_.append(ast.literal_eval(ele))
-        except:
-            embedding_.append(ele)
-    list(embedding_).append(new_embedding)
+    # projection = request.get_json()['projection']
+    # if projection=='tsne':
+    #     X_embedded = TSNE(n_components=2).fit_transform(embedding_)
+    # else: 
+    #     X_embedded = umap.UMAP().fit_transform(embedding_)
 
-    projection = request.get_json()['projection']
-    if projection=='tsne':
-        X_embedded = TSNE(n_components=2).fit_transform(embedding_)
-    else: 
-        X_embedded = umap.UMAP().fit_transform(embedding_)
-
-    temp={
-        'anomaly_label': 1,
-        'app': request.get_json()['app'],
-        'embedding_ids':'',
-        'embeddings': new_embedding,
-        'error_flag': '',
-        'highlight':1,
-        'template_ids':'',
-        'log_embeddings':'',
-        'log_original': '',
-        'x': X_embedded[-1,0],
-        'y': X_embedded[-1,1]
-    }
-    scatterplot_pd = scatterplot_pd.append(temp, ignore_index = True)
+    # temp={
+    #     'anomaly_label': 1,
+    #     'app': request.get_json()['app'],
+    #     'embedding_ids':'',
+    #     'embeddings': new_embedding,
+    #     'error_flag': '',
+    #     'highlight':1,
+    #     'template_ids':'',
+    #     'log_embeddings':'',
+    #     'log_original': '',
+    #     'x': X_embedded[-1,0],
+    #     'y': X_embedded[-1,1]
+    # }
+    # scatterplot_pd = scatterplot_pd.append(temp, ignore_index = True)
     return jsonify({
         # 'panel_d':filtered.to_dict('records'),
         'scatterplot': scatterplot_pd.to_dict('records')

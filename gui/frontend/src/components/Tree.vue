@@ -582,7 +582,7 @@ export default{
 
             // console.log(that.baseline)
             // ================================== update scatterplot 
-            
+            console.log(data, this.SCATTERPLOT)
             this.$store.commit('updateLOAD_B', true)
             this.$store.commit('sliceSCATTERPLOT')
             this.LOAD_D = true
