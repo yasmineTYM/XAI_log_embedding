@@ -213,31 +213,7 @@ def postTree():
     return jsonify(data)
 
 @app.route('/postLogline', methods =['POST'])
-def postLogline():
-    ## ================================ data for panel D: related log embeddings info ================================
-    # one_window = request.get_json()['window_info']
-    # output = []
-
-    # start = one_window['alert']['features'][0]['value']['start_timestamp']
-    # end = one_window['alert']['features'][0]['value']['end_timestamp']
-    # app = one_window['alert']['source']['source_application']['name']
-    # reference = readjson('../../../../Data/XAI/carts/embeddings/log_level/cpu_hog.txt')
-    # print(reference.columns)
-    # print(start, end, app)
-    # filtered = reference.loc[(reference['instance_id']==app) & (reference['timestamp']>=start) & (reference['timestamp']<end)]
-    # print(len(filtered))
-        # print(i)
-        # f = reference.loc[reference['embedding_string']==str(i)]
-        # if len(f)==0:
-        #     print('error')
-        # else:
-        #     # print(f.index.tolist())
-        #     temp = f.drop(['application_id'], axis=1).iloc[0].to_dict()
-        #     temp['positive_score'] = random.uniform(0, 1)
-        #     temp['positive_uncertainty'] = random.uniform(0, 1)
-        #     temp['negative_score'] = random.uniform(0, 1)
-        #     output.append(temp)
-    
+def postLogline(): 
     ##================================ data for scatterplot ================================
     scatterplot = request.get_json()['scatterplot']
     scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
@@ -245,9 +221,6 @@ def postLogline():
     
     selected = request.get_json()['window_info']['actual_embeddings']
     highlight_ = []
-    # print(selected)
-    # print('=====')
-    # print(type(scatterplot_pd.iloc[0]['log_embeddings']))
     for index, row in scatterplot_pd.iterrows():
         
         embed = ast.literal_eval(row['embeddings'])
@@ -261,41 +234,8 @@ def postLogline():
         'highlight': highlight_
     })
     scatterplot_pd.update(temp)
-    # for ele in scatterplot_pd['embeddings'].tolist():
-    #     try:
-    #         embedding_.append(ast.literal_eval(ele))
-    #     except:
-    #         embedding_.append(ele)
-    # list(embedding_).append(new_embedding)
-
-    # projection = request.get_json()['projection']
-    # if projection=='tsne':
-    #     X_embedded = TSNE(n_components=2).fit_transform(embedding_)
-    # else: 
-    #     X_embedded = umap.UMAP().fit_transform(embedding_)
-
-    # temp={
-    #     'anomaly_label': 1,
-    #     'app': request.get_json()['app'],
-    #     'embedding_ids':'',
-    #     'embeddings': new_embedding,
-    #     'error_flag': '',
-    #     'highlight':1,
-    #     'template_ids':'',
-    #     'log_embeddings':'',
-    #     'log_original': '',
-    #     'x': X_embedded[-1,0],
-    #     'y': X_embedded[-1,1]
-    # }
-    # scatterplot_pd = scatterplot_pd.append(temp, ignore_index = True)
     return jsonify({
-        # 'panel_d':filtered.to_dict('records'),
         'scatterplot': scatterplot_pd.to_dict('records')
-        # 'reference': {
-        #     'embedding_ids': ref['embedding_ids'],
-        #     'error_flag': ref['error_flag'],
-        #     'template_ids': ref['template_ids']
-        # }
     })
 
 @app.route('/findRef', methods=['POST'])
