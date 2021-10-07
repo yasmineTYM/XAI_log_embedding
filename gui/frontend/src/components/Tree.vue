@@ -556,7 +556,7 @@ export default{
                 })
                 this.selected_log_line_data = data
                 
-                this.drawEventDrop(null)
+                // this.drawEventDrop(null)
             })
             .catch((error)=>{
                 console.log(error)
