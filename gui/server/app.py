@@ -7,7 +7,7 @@ import collections
 import json
 import random 
 # configuration
-from scipy.spatial import distance
+# from scipy.spatial import distance
 import umap 
 from sklearn.manifold import TSNE
 from scipy.spatial import distance
@@ -221,10 +221,12 @@ def postLogline():
     
     selected = request.get_json()['window_info']['actual_embeddings']
     highlight_ = []
+    # print(selected)
     for index, row in scatterplot_pd.iterrows():
         
         embed = ast.literal_eval(row['embeddings'])
         embed_round = [round(b,10) for b in embed]
+        # print(embed_round)
         if str(embed_round)==str(selected):
             highlight_.append(1)
             print('yes')
@@ -243,9 +245,9 @@ def findRef():
     scatterplot = request.get_json()['scatterplot']
     scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
     # print(scatterplot_pd.columns)
-    print(len(scatterplot_pd))
+    # print(len(scatterplot_pd))
     scatterplot_pd = scatterplot_pd.loc[scatterplot_pd['anomaly_label']==0]
-    print(len(scatterplot_pd))
+    # print(len(scatterplot_pd))
 
     ## get windowed embeddings, find the closet window embedding from the reference windows     
     new_embedding = request.get_json()['window_embedding'] ## selected one 
@@ -263,15 +265,17 @@ def findRef():
     
     ## get the log embeddings of the min_index
     log_embeddings_ref = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_embeddings'])
+    print(log_embeddings_ref)
+    print(log_embeddings_selected)
     log_errors = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_original'])
     
     distance_matrix = distance.cdist( log_embeddings_ref, log_embeddings_selected,'euclidean')
-    
+    print(distance_matrix.shape)
     distance_matrix_normed = distance_matrix / distance_matrix.max(axis=0)
     x2 = np.ones((distance_matrix.shape))
     x3 = np.subtract(x2, distance_matrix_normed)
     # print(np.array(log_embeddings_selected).shape, np.array(log_embeddings_ref).shape)
-    # print(distance_matrix.shape)
+    print(distance_matrix.shape)
     
     return jsonify({
         # 'log_embeddings': log_embeddings_ref,
