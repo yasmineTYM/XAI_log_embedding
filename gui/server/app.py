@@ -16,6 +16,36 @@ DEBUG = True
 # instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
+def myfunc(z):
+    return 1-z
+
+
+def swap(matrix):
+    matrix = np.array(matrix)   
+    r_i = np.random.randint(matrix.shape[0], size=1)[0]
+    c_i = np.random.randint(matrix.shape[1], size=1)[0]
+    print(r_i, c_i)
+    
+    r = matrix.shape[0]
+    r0 = matrix[r_i,:]
+    dist_list = []
+    for i in range(r):
+        dist = np.linalg.norm(r0 - matrix[i,:])
+        dist_list.append(dist)
+    index_list = sorted(range(len(dist_list)), key=lambda k: dist_list[k])
+    matrix1 = matrix[index_list,:]
+
+    
+    c = matrix.shape[1]
+    c0 = matrix[:,c_i]
+    dist_list = []
+    for i in range(c):
+        dist = np.linalg.norm(c0 - matrix[:,i])
+        dist_list.append(dist)
+    index_list = sorted(range(len(dist_list)), key=lambda k: dist_list[k])
+    matrix2 = matrix1[:, index_list]
+
+    return matrix2
 
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
@@ -282,6 +312,46 @@ def findRef():
         'ref_errors': log_errors,
         'matrix_distance': x3.tolist()
     })
+
+@app.route('/findRef_MP', methods=['POST'])
+def findRef_MP():
+    scatterplot = request.get_json()['scatterplot']
+    scatterplot_pd = pd.DataFrame.from_dict(scatterplot)
+    # print(scatterplot_pd.columns)
+    # print(len(scatterplot_pd))
+    scatterplot_pd = scatterplot_pd.loc[scatterplot_pd['anomaly_label']==0]
+    # print(len(scatterplot_pd))
+
+    ## get windowed embeddings, find the closet window embedding from the reference windows     
+    new_embedding = request.get_json()['window_embedding'] ## selected one 
+    log_embeddings_selected = request.get_json()['log_embeddings'] ## selected one 
+    distance_list=[]
+    
+    for ele in scatterplot_pd['embeddings'].tolist():
+        try:
+            temp = ast.literal_eval(ele)
+            d = distance.euclidean(temp, new_embedding)
+            distance_list.append(d)
+        except:
+            print('error')
+    min_index = distance_list.index(min(distance_list))
+    
+    ## get the log embeddings of the min_index
+    log_embeddings_ref = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_embeddings'])
+    log_errors = ast.literal_eval(scatterplot_pd.iloc[min_index]['log_original'])
+    
+    distance_matrix = distance.cdist( log_embeddings_ref, log_embeddings_selected,'euclidean')
+    distance_matrix = (distance_matrix - np.min(distance_matrix))/np.ptp(distance_matrix)
+    myfunc_vec = np.vectorize(myfunc)
+    distance_matrix = myfunc_vec(distance_matrix)
+    # print(np.array(log_embeddings_selected).shape, np.array(log_embeddings_ref).shape)
+    
+    final_matrix = swap(distance_matrix)
+    return jsonify({
+        'ref_errors': log_errors,
+        'matrix_distance': final_matrix.tolist()
+    })
+
 @app.route('/getTemplate', methods=['GET'])
 def getTemplate():
     data = pd.read_json('../../../../Data/XAI/baseline/log_embedding_template.json', lines=True)

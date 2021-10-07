@@ -1,6 +1,7 @@
 <template>
     <div>
         <el-row class="scatter_row">
+            <el-button type="info" size="mini" plain @click="matrix_permutation()">Matrix_P</el-button>
         </el-row>
         <el-row style="overflow-x:scroll;height:321px;border-bottom:1px solid grey" class="timeLine">
             <div id="div_timeline"></div>
@@ -81,6 +82,7 @@ import Tabulator from 'tabulator-tables';
 export default{
     data(){
         return{
+            selected_log_line_data: null,
             card_width:180, //timeline, card width
            text_detail:'ttt',
            tree_items: null,
@@ -106,6 +108,42 @@ export default{
 
     },
     methods: {
+        matrix_permutation(){
+            var that = this
+            var path_1 = "http://localhost:5000/findRef_MP"
+            var payload_1 = {
+                'scatterplot': this.SCATTERPLOT,
+                'window_embedding':that.selected_log_line_data['actual_embeddings'],
+                'log_embeddings': that.selected_log_line_data['log_embeddings']
+            }
+            axios.post(path_1, payload_1)
+            .then((res1)=>{
+                var heatmap_data = []
+                let selected_n = res1.data['matrix_distance'].length
+                let ref_n = res1.data['matrix_distance'][0].length
+                
+                for(let i=0; i<selected_n; i++){
+                    for(let j=0; j<ref_n; j++){
+                        heatmap_data.push({
+                            'variable': i.toString(),
+                            'group': j.toString(),
+                            'value': res1.data['matrix_distance'][i][j] 
+                        })
+                    }
+                }
+                const myVars = [...new Set(heatmap_data.map(item => item.variable))];
+                const myGroups = [...new Set(heatmap_data.map(item => item.group))];
+                let copy_eventdrops = []
+                that.selected_log_line_data['eventdrops'].forEach(function(d){
+                    copy_eventdrops.push(d)
+                })
+                that.drawHeatmap(heatmap_data, myVars, myGroups, copy_eventdrops, res1.data['ref_errors'])
+            })
+            .catch((error)=>{
+                console.log(error)
+            })
+
+        },
         lineId(id){
             return 'line_'+id
         },
@@ -445,6 +483,7 @@ export default{
             that.show_tree = true
         },
         postLogline(data){
+            
             // console.log(data)
             var that = this
             var coordinate_data = []
@@ -458,7 +497,7 @@ export default{
             }
             axios.post(test, payload1)
             .then((res)=>{
-                console.log(res.data)
+                // console.log(res.data)
                 // console.log(res.data.dimension_sort)
                 // console.log(res.data.output)
                 that.baseline = res.data.output
@@ -515,15 +554,14 @@ export default{
                 data['eventdrops'].forEach(function(d){
                     copy_eventdrops.push(d)
                 })
-
-                // this.drawCoordinate(copy_eventdrops,coordinate_data, features,that.dim_s, false,'#div_embed')
+                this.selected_log_line_data = data
                 
                 this.drawEventDrop(null)
             })
             .catch((error)=>{
                 console.log(error)
             })
-
+            //================================== updating the matrix ==================================
             var path_1 = "http://localhost:5000/findRef"
             var payload_1 = {
                 'scatterplot': this.SCATTERPLOT,
@@ -581,7 +619,7 @@ export default{
             })
 
             // console.log(that.baseline)
-            // ================================== update scatterplot 
+            // ================================== update scatterplot ==================================
             console.log(data, this.SCATTERPLOT)
             this.$store.commit('updateLOAD_B', true)
             this.$store.commit('sliceSCATTERPLOT')
@@ -608,7 +646,7 @@ export default{
         },
         drawHeatmap(data, myVars, myGroups, selected_logs, ref_logs){
             d3.select('#div_embed').html('')
-            console.log(selected_logs, ref_logs)
+            // console.log(selected_logs, ref_logs)
             var unit = d3.min([parseInt(1191/myGroups.length), parseInt(440/myVars.length)])
            // set the dimensions and margins of the graph
             var margin = {top: 30, right: 30, bottom: 30, left: 30},
